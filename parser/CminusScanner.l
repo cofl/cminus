@@ -1,5 +1,6 @@
-WS    [ \t]
-HEX [a-fA-F0-9]
+WS     [ \t]
+HEX    [a-fA-F0-9]
+String \"[^\\\"]*(\\([\\\"abfnrtv'?0]|[xX][a-fA-F0-9][a-fA-F0-9])[^\\\"]*)*\"
 
 %{
 
@@ -143,65 +144,65 @@ static int emitInteger(enum IntegerLiteralType type, const char* src)
 %x LINE_COMMENT
 %%
     /* Alpha Constants */
-int    return INTEGER;
-while  return WHILE;
-else   return ELSE;
-exit   return EXIT;
-if     return IF;
-read   return READ;
-getc   return GETC;
-write  return WRITE;
-print  return PRINT;
-len    return LEN_CALL;
-return return RETURN;
+int      return INTEGER;
+while    return WHILE;
+else     return ELSE;
+exit     return EXIT;
+if       return IF;
+read     return READ;
+getc     return GETC;
+write    return WRITE;
+print    return PRINT;
+len      return LEN_CALL;
+return   return RETURN;
 
     /* Symbol Constants */
-"~"    return BNOT;
-"^"    return BXOR;
-">>"   return RSHIFT;
-"<<"   return LSHIFT;
-"!"    return NOT;
-"||"   return OR;
-"|"    return BOR;
-"&&"   return AND;
-"&"    return BAND;
-"\<="  return LE;
-"<"    return LT;
-">="   return GE;
-">"    return GT;
-"=="   return EQ;
-"!="   return NE;
-"="    return ASSIGN;
-"*="   return MULT_ASSIGN;
-"/="   return DIV_ASSIGN;
-"+="   return ADD_ASSIGN;
-"-="   return SUB_ASSIGN;
-"%="   return MOD_ASSIGN;
-"^="   return BXOR_ASSIGN;
-"&="   return BAND_ASSIGN;
-"|="   return BOR_ASSIGN;
-"**="  return EXPNT_ASSIGN;
-"&&="  return LAND_ASSIGN;
-"||="  return LOR_ASSIGN;
-"<<="  return LSHIFT_ASSIGN;
-">>="  return RSHIFT_ASSIGN;
-";"    return SEMICOLON;
-"{"    return LBRACE;
-"}"    return RBRACE;
-"["    return LBRACKET;
-"]"    return RBRACKET;
-"("    return LPAREN;
-")"    return RPAREN;
-"+"    return PLUS;
-"-"    return MINUS;
-"**"   return EXPONENT;
-"*"    return TIMES;
-"/"    return DIVIDE;
-"%"    return MODULO;
-","    return COMMA;
+"~"      return BNOT;
+"^"      return BXOR;
+">>"     return RSHIFT;
+"<<"     return LSHIFT;
+"!"      return NOT;
+"||"     return OR;
+"|"      return BOR;
+"&&"     return AND;
+"&"      return BAND;
+"\<="    return LE;
+"<"      return LT;
+">="     return GE;
+">"      return GT;
+"=="     return EQ;
+"!="     return NE;
+"="      return ASSIGN;
+"*="     return MULT_ASSIGN;
+"/="     return DIV_ASSIGN;
+"+="     return ADD_ASSIGN;
+"-="     return SUB_ASSIGN;
+"%="     return MOD_ASSIGN;
+"^="     return BXOR_ASSIGN;
+"&="     return BAND_ASSIGN;
+"|="     return BOR_ASSIGN;
+"**="    return EXPNT_ASSIGN;
+"&&="    return LAND_ASSIGN;
+"||="    return LOR_ASSIGN;
+"<<="    return LSHIFT_ASSIGN;
+">>="    return RSHIFT_ASSIGN;
+";"      return SEMICOLON;
+"{"      return LBRACE;
+"}"      return RBRACE;
+"["      return LBRACKET;
+"]"      return RBRACKET;
+"("      return LPAREN;
+")"      return RPAREN;
+"+"      return PLUS;
+"-"      return MINUS;
+"**"     return EXPONENT;
+"*"      return TIMES;
+"/"      return DIVIDE;
+"%"      return MODULO;
+","      return COMMA;
 
     /* Strings */
-\"[^\\\"]*(\\([\\\"abfnrtv'?0]|[xX]{HEX}{HEX})[^\\\"]*)*\" return emitString(Cminus_text);
+{String} return emitString(Cminus_text);
 
     /* Identifiers / Literals */
 [a-zA-Z_][a-zA-Z0-9_]* return emitIdentifier(Cminus_text);
