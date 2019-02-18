@@ -12,11 +12,11 @@ ARCHIVE = libparser$(ENV).a
 INCLUDES= -I. \
 	  -I..
 
-CFLAGS	= $(INCLUDES) -DYYERROR_VERBOSE $(ENV) 
+CFLAGS	= $(INCLUDES) -DYYERROR_VERBOSE $(ENV)
 LEX	= flex
-LFLAGS = 
+LFLAGS =
 YACC	= bison
-YFLAGS	= 
+YFLAGS	=
 ARFLAGS = ru
 
 RM = /bin/rm -f
@@ -31,7 +31,7 @@ LP = (
 RP = )
 ARCHIVE_OBJS = $(addsuffix $(RP),$(addprefix $(ARCHIVE)$(LP),$(notdir $(OBJS))))
 
-.SUFFIXES: .c .y .l 
+.SUFFIXES: .c .y .l
 
 $(ARCHIVE): $(ARCHIVE_OBJS)
 	echo "Generating" $(ARCHIVE)
@@ -41,6 +41,7 @@ $(ARCHIVE): $(ARCHIVE_OBJS)
 
 clean:
 	$(RM) $(ARCHIVE)
+	$(RM) $(DEPENDS)
 
 .c.o:
 	echo "Compiling" $<
@@ -76,10 +77,10 @@ clean:
 .d_%.y: %.y
 	echo "$(basename $<).c: $<" > $@
 
-.d_%: %.c 
+.d_%: %.c
 	echo  "Updating dependences for" $< "..."
 	$(CPP) -MM -MT '$(ARCHIVE)($(basename $<).o)' $(INCLUDES) -MF $@ $<
-	 
+
 
 #
 # This includes all of the dependence files. If the file does not exist,
@@ -87,5 +88,5 @@ clean:
 #
 
 include $(DEPENDS)
-	 
+
 # DO NOT DELETE THIS LINE -- make depend depends on it.

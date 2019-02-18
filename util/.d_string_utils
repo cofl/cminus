@@ -1,2 +1,0 @@
-libutil-g.a(string_utils.o): string_utils.c ../util/general.h \
- ../util/string_utils.h
