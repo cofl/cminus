@@ -1,0 +1,8 @@
+{
+    "recommendations": [
+        "lfurzewaddock.vscode-wsl-workspacefolder",
+        "ms-vscode.cpptools",
+        "vector-of-bool.cmake-tools",
+        "faustinoaq.lex-flex-yacc-bison"
+    ]
+}

@@ -3,6 +3,7 @@ HEX [a-fA-F0-9]
 String  \"[^\\\"]*(\\([\\\"abfnrtv'?0]|[xX][a-fA-F0-9][a-fA-F0-9])[^\\\"]*)*\"
 
 %{
+#include<iostream>
 #include<cerrno>
 #include<climits>
 #include<cstdlib>
@@ -11,12 +12,14 @@ String  \"[^\\\"]*(\\([\\\"abfnrtv'?0]|[xX][a-fA-F0-9][a-fA-F0-9])[^\\\"]*)*\"
 #include<string>
 #include "CminusParser.hpp"
 #include "CminusDriver.hpp"
+#undef YY_DECL
+#include "CminusScanner.hpp"
 
 #define STEP() location.step()
-#define STEP_LINES(x) { location.lines((x)) location.step(); }
+#define STEP_LINES(x) { location.lines((x)); location.step(); }
 
 /* This is run every time a pattern is matched */
-#define YY_USER_ACTION location.columns(yyleng);
+#define YY_USER_ACTION location.columns(YYLeng());
 
 using namespace std;
 
@@ -25,9 +28,8 @@ Cminus::parser::symbol_type make_INTCON_Base10(const std::string& str, const Cmi
 Cminus::parser::symbol_type make_INTCON_Base16(const std::string& str, const Cminus::parser::location_type& location);
 %}
 
-%option noyywrap c++
-%option nounput noinput batch debug
-%option prefix="Cminus_"
+%option c++ noyywrap nounput debug
+%option yyclass="Cminus::Scanner"
 
 %x BLOCK_COMMENT
 %x LINE_COMMENT
@@ -35,20 +37,20 @@ Cminus::parser::symbol_type make_INTCON_Base16(const std::string& str, const Cmi
 %%
 %{
     /* run inside the function */
-Cminus::location& location = DriverInstance.location;
+Cminus::location& location = DriverInstance.Location;
 location.step();
 %}
     /* Skip blanks, comments */
 {WS}+               location.step();
-\n+                 STEP_LINES(Cminus_leng);
+\n+                 STEP_LINES(YYLeng());
 "//"                location.step(); BEGIN(LINE_COMMENT);
 
 "/*"                location.step(); BEGIN(BLOCK_COMMENT);
-<LINE_COMMENT>\n+   STEP_LINES(Cminus_leng); BEGIN(INITIAL);
+<LINE_COMMENT>\n+   STEP_LINES(YYLeng()); BEGIN(INITIAL);
 <LINE_COMMENT>.     location.step();
 
 <BLOCK_COMMENT>"*/" location.step(); BEGIN(INITIAL);
-<BLOCK_COMMENT>\n+  STEP_LINES(Cminus_leng);
+<BLOCK_COMMENT>\n+  STEP_LINES(YYLeng());
 <BLOCK_COMMENT>.    location.step();
 
     /* Alpha Constants */
@@ -110,20 +112,31 @@ return   return Cminus::parser::make_RETURN(location);
 ","      return Cminus::parser::make_COMMA(location);
 
     /* Literals */
-{String}               return make_STRING(Cminus_text, location);
-[a-zA-Z_][a-zA-Z0-9_]* return Cminus::parser::make_IDENTIFIER(Cminus_text, location);
-0[xX][0-9a-fA-F]+      return make_INTCON_Base10(Cminus_text, location);
-[0-9]+                 return make_INTCON_Base16(Cminus_text, location);
+{String}               return make_STRING(YYText(), location);
+[a-zA-Z_][a-zA-Z0-9_]* return Cminus::parser::make_IDENTIFIER(YYText(), location);
+0[xX][0-9a-fA-F]+      return make_INTCON_Base10(YYText(), location);
+[0-9]+                 return make_INTCON_Base16(YYText(), location);
 
     /* Catch-all */
-.   { throw Cminus::parser::syntax_error(location, "Invalid charater: " + std::string(Cminus_text)); }
-<<EOF>> { /* TODO */ }
+.   { throw Cminus::parser::syntax_error(location, "Invalid charater: " + std::string(YYText())); }
+<<EOF>>                return Cminus::parser::make_END_OF_FILE(location);
 %%
+
+static int hc2i(char c)
+{
+    if(c >= 'a')
+        return c - 'a' + 10;
+    if(c >= 'A')
+        return c - 'A' + 10;
+    return c - '0';
+}
+
 Cminus::parser::symbol_type make_STRING(const std::string& str, const Cminus::parser::location_type& location)
 {
-    int i = 0, j = 0;
-    char* temp = str.copy().c_str() + 1;
-    while(i < Cminus_leng && temp[i] != '"')
+    int i = 0, j = 0, length = str.length();
+    std::string text = str;
+    char* temp = ((char*) text.c_str()) + 1;
+    while(i < length && temp[i] != '"')
     {
         if(temp[i] == '\\')
         {
@@ -167,7 +180,7 @@ Cminus::parser::symbol_type make_STRING(const std::string& str, const Cminus::pa
                     i += 2;
                     break;
                 default:
-                    fprintf(stderr, "Scanner: Unrecognized escaped character '%c' on line %d\n", temp[i], Cminus_lineno - 1);
+                    fprintf(stderr, "Scanner: Unrecognized escaped character '%c'\n", temp[i]);
                     break;
             }
         }
@@ -186,24 +199,11 @@ Cminus::parser::symbol_type make_INTCON_Base10(const std::string& str, const Cmi
 Cminus::parser::symbol_type make_INTCON_Base16(const std::string& str, const Cminus::parser::location_type& location)
 {
     int temp;
-    sscanf(src.c_str(), "%x", &temp);
+    sscanf(str.c_str(), "%x", &temp);
     return Cminus::parser::make_INTCON(temp, location);
 }
 
-void CminusDriver::scan_begin()
+Cminus::Scanner::Scanner(std::istream& in) : yyFlexLexer(&in)
 {
-    yy_flex_debug = trace_scanning;
-    if (file.empty() || file == "-")
-    {
-        Cminus_in = stdin;
-    } else if (!(Cminus_in = fopen(file.c_str(), "rb")))
-    {
-        cerr << "Cannot open " << file ": " << sterror(errno) << "\n";
-        exit(EXIT_FAILURE);
-    }
-}
-
-void CminusDriver::scan_end()
-{
-    fclose(Cminus_in);
+    // nop
 }

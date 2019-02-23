@@ -2,27 +2,30 @@
     /* Preamble */
     #define CminusDriver_HPP
     #include <string>
+    #include <iostream>
     #include <map>
     #include "CminusParser.hpp"
 
     /* Definitions */
-#define YY_DECL Cminus::parser::symbol_type yylex(CminusDriver& driver)
-
-    /* Driver Class */
-class CminusDriver
+namespace Cminus
 {
-    public:
-        CminusDriver();
-        std::map<std::string, int*> Variables;
-        std::string FileName;
-        bool trace_parsing;
-        bool trace_scanning;
-        Cminus::location Location;
+    /* Driver Class */
+    class Driver
+    {
+        public:
+            Driver();
 
-        int Parse(const std::string& fileName);
-        void scan_begin();
-        void scan_end();
-};
+            int Parse(const std::string& fileName);
+            parser::symbol_type NextSymbol();
 
-YY_DECL;
+            location Location;
+            std::map<std::string, int*> Variables;
+        private:
+            std::string FileName;
+            bool trace_parsing;
+            bool trace_scanning;
+            Scanner* scanner;
+    };
+}
+
 #endif

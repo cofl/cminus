@@ -1,6 +1,10 @@
 %language "c++"
 %code requires {
-    class CminusDriver;
+    namespace Cminus
+    {
+        class Driver;
+        class Scanner;
+    }
 }
 
 %{
@@ -9,6 +13,9 @@
 #include <cstdio>
 #include <cmath>
 #include "CminusDriver.hpp"
+#include "CminusScanner.hpp"
+
+Cminus::parser::symbol_type yylex(Cminus::Driver& driverInstance);
 %}
 
 %define api.namespace {Cminus}
@@ -20,7 +27,7 @@
 
 %defines
 %locations
-%param { CminusDriver& DriverInstance }
+%param { Cminus::Driver& DriverInstance }
 
 /* Reserved/Special */
 %token
@@ -352,23 +359,7 @@ void Cminus::parser::error(const location_type& locationType, const std::string&
     std::cerr << locationType << ": " << msg << "\n";
 }
 
-static void init(std::string inputFileName)
+Cminus::parser::symbol_type yylex(Cminus::Driver& driverInstance)
 {
-    if(inputFileName.empty() || inputFileName == "-")
-        return;
-    auto outputFile = inputFileName.substr(0, inputFileName.rfind('.')) + ".s";
-    stdout = freopen(outputFile.c_str(),"w",stdout);
-    if (stdout == NULL)
-    {
-        std::cerr << "Error: Could not open file " << outputFile << "\n";
-        exit(-1);
-    }
-}
-
-int main(int argc, char** argv)
-{
-    auto inputFileName = argc > 1 ? argv[1] : "";
-    CminusDriver driver;
-    init(inputFileName);
-    return driver.Parse(inputFileName);
+    return driverInstance.NextSymbol();
 }
