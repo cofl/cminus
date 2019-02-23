@@ -1,32 +1,19 @@
-OBJ_TYPE_FLAG = -g
+TARGET = cmc
+WORKING_DIRECTORY = build
 CC = gcc
-TARGET	= cmc
-DIRS = parser util 
-LIBS = parser/libparser-g.a util/libutil-g.a 
-DOXYGEN_SRC = CminusCompilerDocumentation.Doxyfile
-
-RM = /bin/rm -f
-
-CFLAGS	= $(OBJ_TYPE_FLAG) 
+CXX = g++
 
 .SILENT:
+.PHONY: $(WORKING_DIRECTORY) clean docs
 
-$(TARGET): $(LIBS)
-	echo "Creating $@"
-	$(CC) $(CFLAGS) -o $@ $(LIBS) 
+$(TARGET): $(WORKING_DIRECTORY) $(WORKING_DIRECTORY)/Makefile
+	$(MAKE) -C $(WORKING_DIRECTORY) $(TARGET)
 
-.PHONY: $(LIBS) clean docs
+$(WORKING_DIRECTORY)/Makefile: $(WORKING_DIRECTORY) CMakeLists.txt
+	cd $(WORKING_DIRECTORY) && cmake -D CMAKE_C_COMPILER=$(CC) -D CMAKE_CXX_COMPILER=$(CXX) -D TARGET=$(TARGET) ..
 
-$(LIBS): 
-	echo "Making directory $(dir $@)"
-	$(MAKE) -C $(dir $@)
+$(WORKING_DIRECTORY):
+	mkdir -p $(WORKING_DIRECTORY)
 
 clean:
-	for dir in $(DIRS); do \
-		echo "Cleaning directory $$dir"; \
-		$(MAKE) -C $$dir clean; \
-	done
-	$(RM) $(TARGET)
-
-docs:
-	doxygen $(DOXYGEN_SRC)
+	rm -rf $(WORKING_DIRECTORY)

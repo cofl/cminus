@@ -1,4 +1,4 @@
-#include "CminusDriver.hh"
+#include "CminusDriver.hpp"
 
 CminusDriver::CminusDriver()
     : trace_parsing(false), trace_scanning(false)
@@ -9,7 +9,7 @@ CminusDriver::CminusDriver()
 int CminusDriver::Parse(const std::string& fileName)
 {
     FileName = fileName;
-    Location.initialize (&file);
+    Location.initialize (& (std::string&) fileName);
     scan_begin();
     Cminus::parser parser(*this);
     parser.set_debug_level (trace_parsing);

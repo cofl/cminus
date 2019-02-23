@@ -1,13 +1,17 @@
 %language "c++"
+%code requires {
+    class CminusDriver;
+}
 
 %{
 #include <string>
 #include <cstdlib>
 #include <cstdio>
-#include "CminusDriver.hh"
+#include <cmath>
+#include "CminusDriver.hpp"
 %}
 
-%name-prefix "Cminus_"
+%define api.namespace {Cminus}
 %define api.token.constructor
 %define api.value.type variant
 %define parse.assert
@@ -143,17 +147,17 @@ IdentifierList      : VarDecl
                     | IdentifierList "," VarDecl
                     ;
 
-VarDecl             : IDENTIFIER                { DriverInstance.Variables[$1] = malloc(sizeof(int)); }
-                    | IDENTIFIER "[" INTCON "]" { DriverInstance.Variables[$1] = malloc(sizeof(int) * $3); }
+VarDecl             : IDENTIFIER                { DriverInstance.Variables[$1] = (int*) malloc(sizeof(int)); }
+                    | IDENTIFIER "[" INTCON "]" { DriverInstance.Variables[$1] = (int*) malloc(sizeof(int) * $3); }
                     | IDENTIFIER "=" LogicExpr
                     {
-                        int* temp = malloc(sizeof(int));
+                        int* temp = new int[0];
                         *temp = $3;
                         DriverInstance.Variables[$1] = temp;
                     }
                     | IDENTIFIER "[" INTCON[Size] "]" "=" LogicExpr[Value]
                     {
-                        int* temp = malloc(sizeof(int) * $Size);
+                        int* temp = new int[$Size];
                         for(int i = 0; i < $3; i += 1)
                             temp[i] = $Value;
                         DriverInstance.Variables[$1] = temp;
@@ -163,7 +167,7 @@ VarDecl             : IDENTIFIER                { DriverInstance.Variables[$1] =
                         int listSize = $List.size();
                         if(listSize > $Size)
                             throw Cminus::parser::syntax_error(DriverInstance.Location, "Expression list is longer than declared size.");
-                        int* temp = malloc(sizeof(int) * $Size);
+                        int* temp = new int[$Size];
                         for(int i = 0; i < listSize; i += 1)
                             temp[i] = $List[i];
                         DriverInstance.Variables[$1] = temp;
@@ -176,7 +180,7 @@ VarDecl             : IDENTIFIER                { DriverInstance.Variables[$1] =
                             listSize += 1;
                         if(listSize > $Size)
                             throw Cminus::parser::syntax_error(DriverInstance.Location, "String is longer than declared size.");
-                        int* temp = malloc(sizeof(int) * $Size);
+                        int* temp = new int[$Size];
                         for(int i = 0; i < listSize; i += 1)
                             temp[i] = $Value[i];
                         DriverInstance.Variables[$1] = temp;
@@ -184,7 +188,7 @@ VarDecl             : IDENTIFIER                { DriverInstance.Variables[$1] =
                     | IDENTIFIER "[" "]" "=" STRING[Value]
                     {
                         int length = $Value.size();
-                        int* temp = malloc(sizeof(int) * (length + 1))
+                        int* temp = new int[length + 1];
                         for(; length >= 0; length -= 1)
                             temp[length] = $Value[length];
                         DriverInstance.Variables[$1] = temp;
@@ -225,7 +229,7 @@ WhileExpr           : "(" Expr ")"
 IOStatement         : READ "(" Variable ")" ";"     { scanf("%d", $3); }
                     | GETC "(" Variable ")" ";"     { *$3 = getchar(); }
                     | WRITE "(" Expr ")" ";"        { printf("%d\n", $3); }
-                    | WRITE "(" STRING ")" ";"      { printf("%s\n", $3); }
+                    | WRITE "(" STRING ")" ";"      { printf("%s\n", $3.c_str()); }
                     | PRINT "(" Expr ")" ";"        { printf("%c", $3); }
                     | PRINT "(" Expr "," Variable[Str] ")" ";"
                     {
@@ -259,7 +263,7 @@ AssignExpr          : Variable ASSIGN IAssignExpr           { $$ = *$1 = $3; }
                     | Variable BXOR_ASSIGN IAssignExpr      { $$ = (*$1 = *$1 ^ $3); }
                     | Variable BAND_ASSIGN IAssignExpr      { $$ = (*$1 = *$1 & $3); }
                     | Variable BOR_ASSIGN IAssignExpr       { $$ = (*$1 = *$1 | $3); }
-                    | Variable EXPNT_ASSIGN IAssignExpr     { $$ = (*$1 = intPow(*$1, $3)); }
+                    | Variable EXPNT_ASSIGN IAssignExpr     { $$ = (*$1 = (int) pow((long) *$1, (long) $3)); }
                     | Variable LAND_ASSIGN IAssignExpr      { $$ = (*$1 = *$1 && $3); }
                     | Variable LOR_ASSIGN IAssignExpr       { $$ = (*$1 = *$1 || $3); }
                     | Variable LSHIFT_ASSIGN IAssignExpr    { $$ = (*$1 = *$1 << $3); }
@@ -272,7 +276,6 @@ IAssignExpr         : LogicExpr
 
 ExprList            : LogicExpr
                     {
-                        $$ = new std::vector<int>();
                         $$.push_back($1);
                     }
                     | ExprList "," LogicExpr
@@ -317,7 +320,7 @@ MulExpr             : ExpntExpr
                     ;
 
 ExpntExpr           : BnotExpr
-                    | ExpntExpr EXPONENT BnotExpr { $$ = intPow($1, $3); }
+                    | ExpntExpr EXPONENT BnotExpr { $$ = (int) pow((long) $1, (long) $3); }
                     ;
 
 BnotExpr            : Factor
@@ -339,7 +342,7 @@ Factor              : INTCON
                     ;
 
 Variable            : IDENTIFIER                  { $$ = (int*) (DriverInstance.Variables[$1]); }
-                    | IDENTIFIER "[" Expr "]"     { $$ = &(((int*) (DriverInstance.Variable[$1]))[$3]); }
+                    | IDENTIFIER "[" Expr "]"     { $$ = &(((int*) (DriverInstance.Variables[$1]))[$3]); }
                     ;
 
 %%
@@ -354,10 +357,10 @@ static void init(std::string inputFileName)
     if(inputFileName.empty() || inputFileName == "-")
         return;
     auto outputFile = inputFileName.substr(0, inputFileName.rfind('.')) + ".s";
-    stdout = freopen(,"w",stdout);
+    stdout = freopen(outputFile.c_str(),"w",stdout);
     if (stdout == NULL)
     {
-        cerr << "Error: Could not open file " << outputFile << "\n";
+        std::cerr << "Error: Could not open file " << outputFile << "\n";
         exit(-1);
     }
 }
@@ -366,6 +369,6 @@ int main(int argc, char** argv)
 {
     auto inputFileName = argc > 1 ? argv[1] : "";
     CminusDriver driver;
-    init(inputFileName)
+    init(inputFileName);
     return driver.Parse(inputFileName);
 }
