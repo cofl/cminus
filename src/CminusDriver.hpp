@@ -19,11 +19,11 @@ namespace Cminus
             parser::symbol_type NextSymbol();
 
             location Location;
-            std::map<std::string, int*> Variables;
-        private:
             std::string FileName;
             bool trace_parsing;
             bool trace_scanning;
+            std::map<std::string, int*> Variables;
+        private:
             Scanner* scanner;
     };
 }

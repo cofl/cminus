@@ -154,11 +154,11 @@ IdentifierList      : VarDecl
                     | IdentifierList "," VarDecl
                     ;
 
-VarDecl             : IDENTIFIER                { DriverInstance.Variables[$1] = (int*) malloc(sizeof(int)); }
-                    | IDENTIFIER "[" INTCON "]" { DriverInstance.Variables[$1] = (int*) malloc(sizeof(int) * $3); }
+VarDecl             : IDENTIFIER                { DriverInstance.Variables[$1] = new int[1]; }
+                    | IDENTIFIER "[" INTCON "]" { DriverInstance.Variables[$1] = new int[$3]; }
                     | IDENTIFIER "=" LogicExpr
                     {
-                        int* temp = new int[0];
+                        int* temp = new int[1];
                         *temp = $3;
                         DriverInstance.Variables[$1] = temp;
                     }
@@ -331,11 +331,11 @@ ExpntExpr           : BnotExpr
                     ;
 
 BnotExpr            : Factor
-                    | BNOT BnotExpr               { $$ = ~$2; }
+                    | BNOT BnotExpr               { $$ = ~($2); }
                     ;
 
-Factor              : INTCON
-                    | Variable                    { $$ = *$1; }
+Factor              : INTCON                      { $$ = $1; /* INTCON */ }
+                    | Variable                    { $$ = *($1); }
                     | LEN_CALL LPAREN Variable RPAREN
                     {
                         int safety = 4096;
@@ -348,10 +348,9 @@ Factor              : INTCON
                     | MINUS Factor                { $$ = -$2; }
                     ;
 
-Variable            : IDENTIFIER                  { $$ = (int*) (DriverInstance.Variables[$1]); }
-                    | IDENTIFIER "[" Expr "]"     { $$ = &(((int*) (DriverInstance.Variables[$1]))[$3]); }
+Variable            : IDENTIFIER                  { $$ = DriverInstance.Variables[$1]; }
+                    | IDENTIFIER "[" Expr "]"     { $$ = &(DriverInstance.Variables[$1][$3]); }
                     ;
-
 %%
 
 void Cminus::parser::error(const location_type& locationType, const std::string& msg)

@@ -114,8 +114,8 @@ return   return Cminus::parser::make_RETURN(location);
     /* Literals */
 {String}               return make_STRING(YYText(), location);
 [a-zA-Z_][a-zA-Z0-9_]* return Cminus::parser::make_IDENTIFIER(YYText(), location);
-0[xX][0-9a-fA-F]+      return make_INTCON_Base10(YYText(), location);
-[0-9]+                 return make_INTCON_Base16(YYText(), location);
+0[xX][0-9a-fA-F]+      return make_INTCON_Base16(YYText(), location);
+[0-9]+                 return make_INTCON_Base10(YYText(), location);
 
     /* Catch-all */
 .   { throw Cminus::parser::syntax_error(location, "Invalid charater: " + std::string(YYText())); }

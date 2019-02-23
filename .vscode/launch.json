@@ -10,7 +10,7 @@
             "request": "launch",
             "program": "${command:extension.vscode-wsl-workspaceFolder}/cmc",
             "args": [
-                "${command:extension.vscode-wsl-workspaceFolder}/input/1.hello.cm"
+                "${command:extension.vscode-wsl-workspaceFolder}/input/3.add.cm"
             ],
             "stopAtEntry": true,
             "cwd": "${command:extension.vscode-wsl-workspaceFolder}",
