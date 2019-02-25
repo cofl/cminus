@@ -15,7 +15,7 @@ namespace Cminus
         public:
             Driver();
 
-            int Parse(const std::string& fileName);
+            int Parse(const std::string& fileName, std::istream* inputStream, std::ostream* outputStream);
             parser::symbol_type NextSymbol();
 
             location Location;

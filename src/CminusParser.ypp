@@ -5,6 +5,7 @@
         class Driver;
         class Scanner;
     }
+#include <iostream>
 }
 
 %{
@@ -12,7 +13,6 @@
 #include <cstdlib>
 #include <cstdio>
 #include <cmath>
-#include <iostream>
 #include "CminusDriver.hpp"
 #include "CminusScanner.hpp"
 
@@ -29,6 +29,7 @@ Cminus::parser::symbol_type yylex(Cminus::Driver& driverInstance);
 %defines
 %locations
 %param { Cminus::Driver& DriverInstance }
+%parse-param { std::ostream& outputStream }
 
 /* Reserved/Special */
 %token
@@ -232,13 +233,13 @@ WhileExpr           : "(" Expr ")"
 
 IOStatement         : READ "(" Variable ")" ";"     { scanf("%d", $3); }
                     | GETC "(" Variable ")" ";"     { *$3 = getchar(); }
-                    | WRITE "(" Expr ")" ";"        { printf("%d\n", $3); }
-                    | WRITE "(" STRING ")" ";"      { printf("%s\n", $3.c_str()); }
-                    | PRINT "(" Expr ")" ";"        { printf("%c", $3); }
+                    | WRITE "(" Expr ")" ";"        { outputStream << $3 << std::endl; }
+                    | WRITE "(" STRING ")" ";"      { outputStream << $3 << std::endl; }
+                    | PRINT "(" Expr ")" ";"        { outputStream << (char) $3; }
                     | PRINT "(" Expr "," Variable[Str] ")" ";"
                     {
                         for(int i = 0; i < $3; i += 1)
-                            printf("%c", $Str[i]);
+                            outputStream << (char) $Str[i];
                     }
                     ;
 

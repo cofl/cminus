@@ -15,34 +15,18 @@ Cminus::Driver::Driver()
     // nop
 }
 
-int Cminus::Driver::Parse(const string& fileName)
+int Cminus::Driver::Parse(const string& fileName, istream* inputStream, ostream* outputStream)
 {
     FileName = fileName;
-    Location.initialize (& (string&) fileName);
+    Location.initialize (&FileName);
 
-    ifstream file;
-    if (fileName.empty() || fileName == "-")
-        scanner = new Scanner(std::cin);
-    else
-    {
-        file.open(fileName, ifstream::in);
-        if(!file.good())
-        {
-            cerr << "Cannot open " << fileName << ": " << strerror(errno) << "\n";
-            exit(EXIT_FAILURE);
-        }
-        scanner = new Scanner(file);
-    }
+    auto& in = *inputStream;
+    scanner = new Scanner(in);
     scanner->set_debug(trace_scanning);
 
-    Cminus::parser parser(*this);
+    Cminus::parser parser(*this, *outputStream);
     parser.set_debug_level (trace_parsing);
-    int res = parser.parse();
-
-    if(file.is_open())
-        file.close();
-
-    return res;
+    return parser.parse();
 }
 
 Cminus::parser::symbol_type Cminus::Driver::NextSymbol()
