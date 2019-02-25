@@ -195,7 +195,6 @@ Cminus::parser::symbol_type make_STRING(const std::string& str, const Cminus::pa
 Cminus::parser::symbol_type make_INTCON_Base10(const std::string& str, const Cminus::parser::location_type& location)
 {
     int temp = atoi(str.c_str());
-    std::cerr << "Parsed constant " << temp << std::endl;
     return Cminus::parser::make_INTCON(temp, location);
 }
 
@@ -203,7 +202,6 @@ Cminus::parser::symbol_type make_INTCON_Base16(const std::string& str, const Cmi
 {
     int temp;
     sscanf(str.c_str(), "%x", &temp);
-    std::cerr << "Parsed constant " << temp << std::endl;
     return Cminus::parser::make_INTCON(temp, location);
 }
 

@@ -255,7 +255,7 @@ StatementList       : Statement
                     | StatementList Statement
                     ;
 
-Expr                : IAssignExpr
+Expr                : IAssignExpr                           { $$ = $1; }
                     ;
 
 AssignExpr          : Variable ASSIGN IAssignExpr           { $$ = *$1 = $3; }
@@ -274,8 +274,8 @@ AssignExpr          : Variable ASSIGN IAssignExpr           { $$ = *$1 = $3; }
                     | Variable RSHIFT_ASSIGN IAssignExpr    { $$ = (*$1 = *$1 >> $3); }
                     ;
 
-IAssignExpr         : LogicExpr
-                    | AssignExpr
+IAssignExpr         : LogicExpr                   { $$ = $1; }
+                    | AssignExpr                  { $$ = $1; }
                     ;
 
 ExprList            : LogicExpr
@@ -289,13 +289,13 @@ ExprList            : LogicExpr
                     }
                     ;
 
-LogicExpr           : SimpleExpr
+LogicExpr           : SimpleExpr                  { $$ = $1; }
                     | LogicExpr OR SimpleExpr     { $$ = $1 || $3; }
                     | LogicExpr AND SimpleExpr    { $$ = $1 && $3; }
                     | NOT LogicExpr               { $$ = !$2; }
                     ;
 
-SimpleExpr          : ShiftExpr
+SimpleExpr          : ShiftExpr                   { $$ = $1; }
                     | SimpleExpr EQ ShiftExpr     { $$ = $1 == $3; }
                     | SimpleExpr NE ShiftExpr     { $$ = $1 != $3; }
                     | SimpleExpr LE ShiftExpr     { $$ = $1 <= $3; }
@@ -307,31 +307,31 @@ SimpleExpr          : ShiftExpr
                     | SimpleExpr BXOR ShiftExpr   { $$ = $1 ^ $3; }
                     ;
 
-ShiftExpr           : AddExpr
+ShiftExpr           : AddExpr                     { $$ = $1; }
                     | ShiftExpr RSHIFT AddExpr    { $$ = $1 >> $3; }
                     | ShiftExpr LSHIFT AddExpr    { $$ = $1 << $3; }
                     ;
 
-AddExpr             : MulExpr
+AddExpr             : MulExpr                     { $$ = $1; }
                     | AddExpr PLUS MulExpr        { $$ = $1 + $3; }
                     | AddExpr MINUS MulExpr       { $$ = $1 - $3; }
                     ;
 
-MulExpr             : ExpntExpr
+MulExpr             : ExpntExpr                   { $$ = $1; }
                     | MulExpr TIMES ExpntExpr     { $$ = $1 * $3; }
                     | MulExpr DIVIDE ExpntExpr    { $$ = $1 / $3; }
                     | MulExpr MODULO ExpntExpr    { $$ = $1 % $3; }
                     ;
 
-ExpntExpr           : BnotExpr
+ExpntExpr           : BnotExpr                    { $$ = $1; }
                     | ExpntExpr EXPONENT BnotExpr { $$ = (int) pow((long) $1, (long) $3); }
                     ;
 
-BnotExpr            : Factor
+BnotExpr            : Factor                      { $$ = $1; }
                     | BNOT BnotExpr               { $$ = ~($2); }
                     ;
 
-Factor              : INTCON
+Factor              : INTCON                      { $$ = $1; }
                     | Variable                    { $$ = *$1;}
                     | LEN_CALL LPAREN Variable RPAREN
                     {
