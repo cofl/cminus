@@ -2,13 +2,15 @@
 #include <fstream>
 #include <cerrno>
 #include <cstring>
+#include <unordered_map>
 #include "CminusDriver.hpp"
 #include "CminusScanner.hpp"
 
 using namespace std;
 
 Cminus::Driver::Driver()
-    : trace_parsing(false), trace_scanning(false)
+    : trace_parsing(false),
+      trace_scanning(false)
 {
     // nop
 }

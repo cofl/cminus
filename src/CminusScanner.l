@@ -28,12 +28,13 @@ Cminus::parser::symbol_type make_INTCON_Base10(const std::string& str, const Cmi
 Cminus::parser::symbol_type make_INTCON_Base16(const std::string& str, const Cminus::parser::location_type& location);
 %}
 
-%option c++ noyywrap nounput debug
-%option yyclass="Cminus::Scanner"
+%option c++ yyclass="Cminus::Scanner" noyywrap
+%option 8bit ecs meta-ecs stack
+%option debug nodefault warn
+%option noinput nounput
 
 %x BLOCK_COMMENT
 %x LINE_COMMENT
-
 %%
 %{
     /* run inside the function */
@@ -193,13 +194,16 @@ Cminus::parser::symbol_type make_STRING(const std::string& str, const Cminus::pa
 
 Cminus::parser::symbol_type make_INTCON_Base10(const std::string& str, const Cminus::parser::location_type& location)
 {
-    return Cminus::parser::make_INTCON(atoi(str.c_str()), location);
+    int temp = atoi(str.c_str());
+    std::cerr << "Parsed constant " << temp << std::endl;
+    return Cminus::parser::make_INTCON(temp, location);
 }
 
 Cminus::parser::symbol_type make_INTCON_Base16(const std::string& str, const Cminus::parser::location_type& location)
 {
     int temp;
     sscanf(str.c_str(), "%x", &temp);
+    std::cerr << "Parsed constant " << temp << std::endl;
     return Cminus::parser::make_INTCON(temp, location);
 }
 

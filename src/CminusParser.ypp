@@ -12,6 +12,7 @@
 #include <cstdlib>
 #include <cstdio>
 #include <cmath>
+#include <iostream>
 #include "CminusDriver.hpp"
 #include "CminusScanner.hpp"
 
@@ -114,12 +115,8 @@ Cminus::parser::symbol_type yylex(Cminus::Driver& driverInstance);
 %left EXPONENT
 %right ASSIGN MULT_ASSIGN DIV_ASSIGN ADD_ASSIGN SUB_ASSIGN MOD_ASSIGN BXOR_ASSIGN BAND_ASSIGN BOR_ASSIGN EXPNT_ASSIGN LAND_ASSIGN LOR_ASSIGN LSHIFT_ASSIGN RSHIFT_ASSIGN
 
-%type <std::string> STRING
-%type <std::string> IDENTIFIER
-%type <int> Assignment
-%type <int> INTCON
-%type <int> Factor BnotExpr ExpntExpr MulExpr AddExpr ShiftExpr SimpleExpr LogicExpr Expr
-%type <int> IAssignExpr AssignExpr
+%type <std::string> STRING IDENTIFIER
+%type <int> Assignment INTCON Factor BnotExpr ExpntExpr MulExpr AddExpr ShiftExpr SimpleExpr LogicExpr Expr IAssignExpr AssignExpr
 %type <int*> Variable
 %type <std::vector<int>> ExprList
 
@@ -154,17 +151,17 @@ IdentifierList      : VarDecl
                     | IdentifierList "," VarDecl
                     ;
 
-VarDecl             : IDENTIFIER                { DriverInstance.Variables[$1] = new int[1]; }
-                    | IDENTIFIER "[" INTCON "]" { DriverInstance.Variables[$1] = new int[$3]; }
+VarDecl             : IDENTIFIER                { DriverInstance.Variables[$1] = (int*) malloc(sizeof(int)); }
+                    | IDENTIFIER "[" INTCON "]" { DriverInstance.Variables[$1] = (int*) malloc(sizeof(int) * $3); }
                     | IDENTIFIER "=" LogicExpr
                     {
-                        int* temp = new int[1];
+                        int* temp = (int*) malloc(sizeof(int));
                         *temp = $3;
                         DriverInstance.Variables[$1] = temp;
                     }
                     | IDENTIFIER "[" INTCON[Size] "]" "=" LogicExpr[Value]
                     {
-                        int* temp = new int[$Size];
+                        int* temp = (int*) malloc(sizeof(int) * $Size);
                         for(int i = 0; i < $3; i += 1)
                             temp[i] = $Value;
                         DriverInstance.Variables[$1] = temp;
@@ -174,7 +171,7 @@ VarDecl             : IDENTIFIER                { DriverInstance.Variables[$1] =
                         int listSize = $List.size();
                         if(listSize > $Size)
                             throw Cminus::parser::syntax_error(DriverInstance.Location, "Expression list is longer than declared size.");
-                        int* temp = new int[$Size];
+                        int* temp = (int*) malloc(sizeof(int) * $Size);
                         for(int i = 0; i < listSize; i += 1)
                             temp[i] = $List[i];
                         DriverInstance.Variables[$1] = temp;
@@ -187,7 +184,7 @@ VarDecl             : IDENTIFIER                { DriverInstance.Variables[$1] =
                             listSize += 1;
                         if(listSize > $Size)
                             throw Cminus::parser::syntax_error(DriverInstance.Location, "String is longer than declared size.");
-                        int* temp = new int[$Size];
+                        int* temp = (int*) malloc(sizeof(int) * $Size);
                         for(int i = 0; i < listSize; i += 1)
                             temp[i] = $Value[i];
                         DriverInstance.Variables[$1] = temp;
@@ -195,7 +192,7 @@ VarDecl             : IDENTIFIER                { DriverInstance.Variables[$1] =
                     | IDENTIFIER "[" "]" "=" STRING[Value]
                     {
                         int length = $Value.size();
-                        int* temp = new int[length + 1];
+                        int* temp = (int*) malloc(sizeof(int) * (length + 1));
                         for(; length >= 0; length -= 1)
                             temp[length] = $Value[length];
                         DriverInstance.Variables[$1] = temp;
@@ -334,8 +331,8 @@ BnotExpr            : Factor
                     | BNOT BnotExpr               { $$ = ~($2); }
                     ;
 
-Factor              : INTCON                      { $$ = $1; /* INTCON */ }
-                    | Variable                    { $$ = *($1); }
+Factor              : INTCON
+                    | Variable                    { $$ = *$1;}
                     | LEN_CALL LPAREN Variable RPAREN
                     {
                         int safety = 4096;

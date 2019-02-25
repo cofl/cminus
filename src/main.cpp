@@ -20,8 +20,8 @@ int main(int argc, char** argv)
 {
     auto inputFileName = argc > 1 ? argv[1] : "";
     Cminus::Driver driver;
-    driver.trace_parsing = true;
-    driver.trace_scanning = true;
+    //driver.trace_parsing = true;
+    //driver.trace_scanning = true;
     init(inputFileName);
     return driver.Parse(inputFileName);
 }

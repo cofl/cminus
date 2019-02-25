@@ -3,7 +3,7 @@
     #define CminusDriver_HPP
     #include <string>
     #include <iostream>
-    #include <map>
+    #include <unordered_map>
     #include "CminusParser.hpp"
 
     /* Definitions */
@@ -22,7 +22,7 @@ namespace Cminus
             std::string FileName;
             bool trace_parsing;
             bool trace_scanning;
-            std::map<std::string, int*> Variables;
+            std::unordered_map<std::string, int*> Variables;
         private:
             Scanner* scanner;
     };
