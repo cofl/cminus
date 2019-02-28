@@ -63,10 +63,7 @@ else     return Parser::make_ELSE(location);
 exit     return Parser::make_EXIT(location);
 if       return Parser::make_IF(location);
 read     return Parser::make_READ(location);
-getc     return Parser::make_GETC(location);
 write    return Parser::make_WRITE(location);
-print    return Parser::make_PRINT(location);
-len      return Parser::make_LEN_CALL(location);
 return   return Parser::make_RETURN(location);
 
     /* Operators */

@@ -1,7 +1,6 @@
 TARGET = cmc
 WORKING_DIRECTORY = build
 TEST_DIRECTORY = input
-CC = gcc
 CXX = g++
 
 RECENT_GCC_AVAILABLE :=$(shell [ `gcc -dumpversion | cut -c 1` -ge "7" ] && echo "YES" || echo "NO")
@@ -27,7 +26,7 @@ $(TARGET): $(WORKING_DIRECTORY) $(WORKING_DIRECTORY)/Makefile
 	cp $(WORKING_DIRECTORY)/$(TARGET) $(TARGET)
 
 $(WORKING_DIRECTORY)/Makefile: $(WORKING_DIRECTORY) CMakeLists.txt
-	cd $(WORKING_DIRECTORY) && $(EVAL) "cmake -D CMAKE_C_COMPILER=$(CC) -D CMAKE_CXX_COMPILER=$(CXX) -D TARGET=$(TARGET) .."
+	cd $(WORKING_DIRECTORY) && $(EVAL) "cmake -D CMAKE_CXX_COMPILER=$(CXX) -D TARGET=$(TARGET) .."
 
 $(WORKING_DIRECTORY):
 	mkdir -p $(WORKING_DIRECTORY)

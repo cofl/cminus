@@ -1,6 +1,7 @@
 {
     "terminal.integrated.shell.windows": "C:\\Windows\\System32\\wsl.exe",
     "files.associations": {
+        "*.rmd": "markdown",
         "*.yy": "bison",
         "array": "cpp",
         "*.tcc": "cpp",
@@ -37,7 +38,9 @@
         "tuple": "cpp",
         "typeinfo": "cpp",
         "utility": "cpp",
-        "memory": "cpp"
+        "memory": "cpp",
+        "variant": "cpp"
     },
-    "cmake.configureOnOpen": false
+    "cmake.configureOnOpen": false,
+    "cmake.cmakePath": "C:/Windows/System32/wsl.exe /usr/bin/cmake"
 }

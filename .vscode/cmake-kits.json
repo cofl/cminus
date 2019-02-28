@@ -1,0 +1,12 @@
+[
+    {
+        "name": "WSL GCC 7",
+        "compilers": {
+            "CC" : "C:/Windows/System32/bash.exe -c /usr/bin/gcc",
+            "CXX" : "C:/Windows/System32/bash.exe -c /usr/bin/g++"
+        },
+        "cmakeSettings": {
+            "cmakePath": "C:/Windows/System32/bash.exe -c /usr/bin/cmake"
+        }
+    }
+]

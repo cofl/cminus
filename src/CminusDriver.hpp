@@ -4,6 +4,7 @@
     #include <string>
     #include <iostream>
     #include <unordered_map>
+    #include <vector>
     #include "CminusParser.hpp"
 
     /* Definitions */
@@ -22,7 +23,10 @@ namespace Cminus
             std::string FileName;
             bool trace_parsing;
             bool trace_scanning;
+            std::vector<std::string> Types;
             std::unordered_map<std::string, int*> Variables;
+
+            int GetTypeID(std::string&& typeName);
         private:
             Scanner* scanner;
     };

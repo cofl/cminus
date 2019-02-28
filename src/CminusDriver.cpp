@@ -12,7 +12,8 @@ Cminus::Driver::Driver()
     : trace_parsing(false),
       trace_scanning(false)
 {
-    // nop
+    Types.insert(Types.begin(), "int");
+    Types.push_back("string");
 }
 
 int Cminus::Driver::Parse(const string& fileName, istream* inputStream, ostream* outputStream)
@@ -27,6 +28,14 @@ int Cminus::Driver::Parse(const string& fileName, istream* inputStream, ostream*
     Cminus::parser parser(*this, *outputStream);
     parser.set_debug_level (trace_parsing);
     return parser.parse();
+}
+
+int Cminus::Driver::GetTypeID(string&& typeName)
+{
+    for(int i = 0; i < Types.size(); i += 1)
+        if(Types[i] == typeName)
+            return i;
+    throw string("Unrecognized type name \"").append(typeName).append("\".");
 }
 
 Cminus::parser::symbol_type Cminus::Driver::NextSymbol()
