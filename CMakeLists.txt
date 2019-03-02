@@ -25,7 +25,7 @@ endif()
 FIND_PACKAGE(BISON)
 FIND_PACKAGE(FLEX)
 
-BISON_TARGET(CminusParser src/CminusParser.ypp ${CMAKE_CURRENT_BINARY_DIR}/CminusParser.cpp)
+BISON_TARGET(CminusParser src/CminusParser.y ${CMAKE_CURRENT_BINARY_DIR}/CminusParser.cpp)
 FLEX_TARGET(CminusScanner src/CminusScanner.l ${CMAKE_CURRENT_BINARY_DIR}/CminusScanner.cpp)
 ADD_FLEX_BISON_DEPENDENCY(CminusScanner CminusParser)
 
