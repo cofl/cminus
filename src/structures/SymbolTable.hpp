@@ -19,6 +19,7 @@ namespace Cminus { namespace Structures
             bool ArraySize;
             int* InitialValue;
             string Location;
+            bool IsGlobal;
     };
 
     class FunctionArgument
@@ -50,6 +51,8 @@ namespace Cminus { namespace Structures
             map<string, FunctionState*> Functions;
             FunctionState* FindFunction(string& name);
             FunctionState* AddFunction(string& name);
+
+            int GetAlignedSize();
     };
 }}
 

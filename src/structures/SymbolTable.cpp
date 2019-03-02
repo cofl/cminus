@@ -9,7 +9,7 @@ namespace Cminus { namespace Structures
     using namespace std;
 
     VariableState::VariableState(SymbolTable* introducedTable)
-        : IntroducedTable(introducedTable)
+        : IntroducedTable(introducedTable), IsGlobal(false)
     {
         // nop
     }
@@ -58,5 +58,11 @@ namespace Cminus { namespace Structures
         auto state = new FunctionState(this);
         Functions[name] = state;
         return state;
+    }
+
+    int SymbolTable::GetAlignedSize()
+    {
+        int size = Variables.size(); // TODO: make sure this is right
+        return size + (16 - size % 16);
     }
 }}

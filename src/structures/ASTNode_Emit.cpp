@@ -43,6 +43,7 @@ namespace Cminus { namespace Structures
             for(auto it = Symbols->Variables.begin(); it != Symbols->Variables.end(); it++)
             {
                 auto data = it->second;
+                data->IsGlobal = true;
                 if(nullptr == data->InitialValue)
                 {
                     data->Location = std::string("_gp[rip+").append(to_string(uninitializedGlobalCount * 4)).append("]");
@@ -96,6 +97,23 @@ namespace Cminus { namespace Structures
             state.OutputStream << "\t.text" << endl
                                << "\t.global\tmain" << endl
                                ;
+        } else
+        {
+            if(!Symbols->Variables.empty())
+            {
+                // reserve space on the stack
+                state.OutputStream << "\tsub rsp, " << Symbols->GetAlignedSize() << endl;
+                int i = 1;
+                for(auto it = Symbols->Variables.begin(); it != Symbols->Variables.end(); it++, i += 1)
+                {
+                    auto data = it->second;
+                    data->Location = to_string(-(i * 4)).append("[rbp]");
+                    if(nullptr != data->InitialValue)
+                    {
+                        // TODO: emit initializer code
+                    }
+                }
+            }
         }
         for(auto const& member: Members)
             member->Emit(state);
@@ -160,17 +178,14 @@ namespace Cminus { namespace Structures
         if(Value->Type == state.GetTypeID("string"))
         {
             // emit string write
-            // TODO: save registers if in use
             auto rdii = state.GetRegisterID("rdi");
             state.FreeRegisters[rdii] = false; // manually reserve register
             Value->Emit(state, "rdi");
             state.OutputStream << "\tcall puts@PLT" << endl; // mildly more efficient than printf
             state.FreeRegisters[rdii] = true; // manually free register
-            // TODO: restore registers if in use
         } else
         {
             // emit value generation, then value write
-            // TODO: save registers if in use
             auto esii = state.GetRegisterID("edi");
             state.FreeRegisters[esii] = false; // manually reserve register
             Value->Emit(state, "esi");
@@ -178,13 +193,11 @@ namespace Cminus { namespace Structures
                                << "\tmov eax, 0"                 << endl
                                << "\tcall printf@PLT"            << endl;
             state.FreeRegisters[esii] = true; // manually free register
-            // TODO: restore registers if in use
         }
     }
 
     void ReadCallASTNode::Emit(DriverState& state)
     {
-        // TODO: state.SaveRegisters("rsi", "rdi", "rax");
         auto rsii = state.GetRegisterID("rsi");
         state.FreeRegisters[rsii] = false; // manually reserve register
         Variable->EmitLValue(state, "rsi");
@@ -192,7 +205,6 @@ namespace Cminus { namespace Structures
                            << "\tmov eax, 0"                 << endl
                            << "\tcall scanf@PLT"             << endl;
         state.FreeRegisters[rsii] = true; // manually free register
-        // TODO: state.RestoreRegisters();
     }
 
     void ExpressionListASTNode::Emit(DriverState& state, const char* destinationRegister)
@@ -222,7 +234,8 @@ namespace Cminus { namespace Structures
 
     void VariableASTNode::EmitLValue(DriverState& state, const char* destinationRegister)
     {
-        state.OutputStream << "\tlea " << destinationRegister << ", " << (Symbols->FindVariable(ID)->Location) << endl;
+        auto data = Symbols->FindVariable(ID);
+        state.OutputStream << "\tlea " << destinationRegister << ", " << data->Location << endl;
     }
 
     void ExitStatementASTNode::Emit(DriverState& state)
@@ -237,7 +250,6 @@ namespace Cminus { namespace Structures
 
     void ReturnStatementASTNode::Emit(DriverState& state)
     {
-        // TODO: don't clobber eax
         if(nullptr != Value)
             Value->Emit(state, "eax");
         state.OutputStream << "\tleave" << endl
@@ -454,6 +466,7 @@ namespace Cminus { namespace Structures
     void UnaryOperationASTNode::Emit(DriverState& state, const char* destinationRegister)
     {
         Member->Emit(state, destinationRegister);
+        auto dst8 = state.GetRegister8(destinationRegister);
         switch(Operation)
         {
             case ASTOperationType::Negation:
@@ -463,7 +476,6 @@ namespace Cminus { namespace Structures
                 state.OutputStream << "\tnot " << destinationRegister << endl;
                 break;
             case ASTOperationType::LogicalNot:
-                auto dst8 = state.GetRegister8(destinationRegister);
                 state.OutputStream << "\tcmp "   << destinationRegister << ", 0"        << endl
                                    << "\tsetz "  << dst8                                << endl
                                    << "\tmovzx " << destinationRegister << ", " << dst8 << endl;
