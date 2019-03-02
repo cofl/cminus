@@ -8,37 +8,55 @@ namespace Cminus { namespace Structures
 {
     using namespace std;
 
-#pragma region SymbolTable
-    SymbolTable::SymbolTable()
-        : _globalFrame(new SymbolTableFrame())
+    VariableState::VariableState(SymbolTable* introducedTable)
+        : IntroducedTable(introducedTable)
     {
-        _frames.push_back(_globalFrame);
+        // nop
     }
 
-    SymbolTable::~SymbolTable()
+    FunctionState::FunctionState(SymbolTable* introducedTable)
+        : IntroducedTable(introducedTable)
     {
-        // TODO
+        // nop
     }
 
-    void SymbolTable::EnterScope()
+    SymbolTable::SymbolTable(SymbolTable* parent)
+        : Parent(parent)
     {
-        _frames.push_back(shared_ptr<SymbolTableFrame>(new SymbolTableFrame()));
+        // nop
     }
 
-    void SymbolTable::ExitScope()
+    VariableState* SymbolTable::FindVariable(string& name)
     {
-        _frames.pop_back();
-    }
-#pragma endregion SymbolTable
-#pragma region SymbolTableFrame
-    SymbolTableFrame::SymbolTableFrame()
-    {
-        // TODO
+        auto iterator = Variables.find(name);
+        if(iterator != Variables.end())
+            return iterator->second;
+        if(nullptr != Parent)
+            return Parent->FindVariable(name);
+        return nullptr;
     }
 
-    SymbolTableFrame::~SymbolTableFrame()
+    VariableState* SymbolTable::AddVariable(string& name)
     {
-        // TODO
+        auto state = new VariableState(this);
+        Variables[name] = state;
+        return state;
     }
-#pragma endregion SymbolTableFrame
+
+    FunctionState* SymbolTable::FindFunction(string& name)
+    {
+        auto iterator = Functions.find(name);
+        if(iterator != Functions.end())
+            return iterator->second;
+        if(nullptr != Parent)
+            return Parent->FindFunction(name);
+        return nullptr;
+    }
+
+    FunctionState* SymbolTable::AddFunction(string& name)
+    {
+        auto state = new FunctionState(this);
+        Functions[name] = state;
+        return state;
+    }
 }}

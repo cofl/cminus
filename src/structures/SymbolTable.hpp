@@ -2,33 +2,54 @@
     #define SymbolTable_HPP
 
 #include <vector>
-#include <memory>
+#include <map>
+#include <string>
 namespace Cminus { namespace Structures
 {
     using namespace std;
-    class SymbolTableFrame;
+
+    class SymbolTable;
+
+    class VariableState
+    {
+        public:
+            VariableState(SymbolTable* introducedTable);
+            SymbolTable* IntroducedTable;
+            int Type;
+            bool ArraySize;
+            int* InitialValue;
+            string Location;
+    };
+
+    class FunctionArgument
+    {
+        public:
+            int TypeID;
+            string Name;
+    };
+
+    class FunctionState
+    {
+        public:
+            FunctionState(SymbolTable* introducedTable);
+            SymbolTable* IntroducedTable;
+            int ReturnType;
+            vector<FunctionArgument> Arguments;
+    };
 
     class SymbolTable
     {
-        private:
-            vector<shared_ptr<SymbolTableFrame>> _frames;
-            shared_ptr<SymbolTableFrame> _globalFrame;
         public:
-            SymbolTable();
-            ~SymbolTable();
+            SymbolTable(SymbolTable* parent);
+            SymbolTable* Parent;
 
-        #pragma region Methods
-            void EnterScope();
-            void ExitScope();
-        #pragma endregion Methods
-    };
+            map<string, VariableState*> Variables;
+            VariableState* FindVariable(string& name);
+            VariableState* AddVariable(string& name);
 
-    class SymbolTableFrame
-    {
-        private:
-        public:
-            SymbolTableFrame();
-            ~SymbolTableFrame();
+            map<string, FunctionState*> Functions;
+            FunctionState* FindFunction(string& name);
+            FunctionState* AddFunction(string& name);
     };
 }}
 

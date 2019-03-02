@@ -35,6 +35,8 @@ add_definitions(-D_GLIBCXX_USE_CXX11_ABI=0)
 add_executable(${TARGET}
     "src/main.cpp"
     "src/CminusDriver.cpp"
-    "src/structures/ASTToken.cpp"
+    "src/structures/ASTNode_constructors.cpp"
+    "src/structures/ASTNode_Emit.cpp"
+    "src/structures/ASTNode_Check.cpp"
     "src/structures/SymbolTable.cpp"
     ${BISON_CminusParser_OUTPUTS} ${FLEX_CminusScanner_OUTPUTS})

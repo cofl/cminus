@@ -6,7 +6,7 @@
         class Scanner;
     }
 #include <iostream>
-#include "structures/ASTToken.hpp"
+#include "structures/ASTNode.hpp"
 
 using namespace Cminus::Structures;
 }
@@ -115,24 +115,33 @@ Cminus::parser::symbol_type yylex(Cminus::Driver& driverInstance);
 %right NO_ELSE ELSE /* to fix shift-reduce conflict I introduced in if/else statement */
 
 %type <int> Type
-%type <ScalarLiteralASTNode<std::string>*> StringConstant
-%type <ScalarLiteralASTNode<int>*> IntegerConstant
-%type <ExpressionASTNode*> Variable Factor Expr BnotExpr ExpntExpr MulExpr AddExpr ShiftExpr SimpleExpr LogicExpr AssignExpr AccessExpr
+%type <StringLiteralASTNode*> StringConstant
+%type <IntegerLiteralASTNode*> IntegerConstant
+%type <ExpressionASTNode*> Variable Factor Expr BnotExpr ExpntExpr MulExpr AddExpr ShiftExpr SimpleExpr LogicExpr AssignExpr AccessExpr NegationExpr
 %type <ExpressionListASTNode*> ExprList
 %type <ASTNode*> Statement ExitStatement ReturnStatement WhileStatement IfStatement IOStatement
 %type <StatementListASTNode*> StatementList
 %type <SingleVariableDeclarationASTNode*> VarDecl
 %type <VariableDeclarationASTNode*> VariableDecl IdentifierList
 %type <FunctionDeclarationASTNode*> ProcedureDecl
-%type <StatementListASTNode*> DeclList Procedures Program
+%type <StatementListASTNode*> DeclList Procedures
 
 %start Program
 %%
-Program             : Procedures            { $$ = $1; }
+Program             : Procedures
+                    {
+                        DriverInstance.Root = $1;
+                    }
                     | DeclList Procedures
                     {
-                        $$ = $1;
-                        $$->Members.insert($$->Members.end(), $2->Members.begin(), $2->Members.end());
+                        DriverInstance.Root = $1;
+                        DriverInstance.Root->Members.insert(DriverInstance.Root->Members.end(), $2->Members.begin(), $2->Members.end());
+                        $2->Members.clear();
+                        delete $2;
+                    }
+                    |
+                    {
+                        DriverInstance.Root = nullptr;
                     }
                     ;
 
@@ -225,7 +234,15 @@ IfStatement         : IF "(" Expr[Test] ")" Statement[IfTrueBody] %prec NO_ELSE
 WhileStatement      : WHILE "(" Expr[Test] ")" Statement[Body] { $$ = new WhileStatementASTNode($Test, $Body); }
                     ;
 
-IOStatement         : READ "(" Variable ")" ";"         { $$ = new ReadCallASTNode($3); }
+IOStatement         : READ "(" Variable ")" ";"
+                    {
+                        if(!($3->NodeType == ASTNodeType::Variable || ($3->NodeType == ASTNodeType::BinaryOperation
+                            && ((BinaryOperationASTNode*)$3)->Operation == ASTOperationType::ArrayAccess)))
+                        {
+                            throw "Read call argument is not an lvalue.";
+                        }
+                        $$ = new ReadCallASTNode($3);
+                    }
                     | WRITE "(" Expr ")" ";"            { $$ = new WriteCallASTNode($3); }
                     | WRITE "(" StringConstant ")" ";"  { $$ = new WriteCallASTNode($3); }
                     ;
@@ -236,7 +253,11 @@ ReturnStatement     : RETURN Expr ";"             { $$ = new ReturnStatementASTN
 ExitStatement       : EXIT ";"                    { $$ = new ExitStatementASTNode(); }
                     ;
 
-StatementList       : Statement                   { $$ = new StatementListASTNode(); }
+StatementList       : Statement
+                    {
+                        $$ = new StatementListASTNode();
+                        $$->Members.push_back($1);
+                    }
                     | StatementList Statement
                     {
                         $$ = $1;
@@ -327,8 +348,12 @@ ExpntExpr           : BnotExpr                    { $$ = $1; }
                     | ExpntExpr EXPONENT BnotExpr { $$ = new BinaryOperationASTNode(ASTOperationType::Exponentiation, $1, $3); }
                     ;
 
-BnotExpr            : AccessExpr                  { $$ = $1; }
+BnotExpr            : NegationExpr                { $$ = $1; }
                     | BNOT BnotExpr               { $$ = new UnaryOperationASTNode(ASTOperationType::BinaryNot, $2); }
+                    ;
+
+NegationExpr        : AccessExpr                  { $$ = $1; }
+                    | MINUS NegationExpr          { $$ = new UnaryOperationASTNode(ASTOperationType::Negation, $2); }
                     ;
 
 AccessExpr          : Factor                      { $$ = $1; }
@@ -339,16 +364,15 @@ Factor              : IntegerConstant             { $$ = $1; }
                     | Variable                    { $$ = $1; }
                     | "(" Expr ")"                { $$ = $2; }
                     | IDENTIFIER "(" ")"          { $$ = new FunctionCallASTNode($1); }
-                    | MINUS Factor                { $$ = new UnaryOperationASTNode(ASTOperationType::Negation, $2); }
                     ;
 
 Variable            : IDENTIFIER                  { $$ = new VariableASTNode($1); }
                     ;
 
-IntegerConstant     : INTCON                      { $$ = new ScalarLiteralASTNode<int>(DriverInstance.GetTypeID("int"), $1); }
+IntegerConstant     : INTCON                      { $$ = new IntegerLiteralASTNode(DriverInstance.GetTypeID("int"), $1); }
                     ;
 
-StringConstant      : STRING                      { $$ = new ScalarLiteralASTNode<std::string>(DriverInstance.GetTypeID("string"), $1); }
+StringConstant      : STRING                      { $$ = new StringLiteralASTNode(DriverInstance.GetTypeID("string"), $1); }
                     ;
 %%
 

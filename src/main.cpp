@@ -114,6 +114,7 @@ int main(int argc, char** argv)
     }
 
     int ret = driver.Parse(options.inputFileName, inputStream, outputStream);
+    driver.Process(*outputStream);
 
     if(options.openedInputFile)
     {

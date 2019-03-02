@@ -1,15 +1,21 @@
 #ifndef CminusDriver_HPP
     /* Preamble */
     #define CminusDriver_HPP
+
     #include <string>
     #include <iostream>
-    #include <unordered_map>
+    #include <map>
     #include <vector>
+    #include "DriverState.hpp"
     #include "CminusParser.hpp"
+    #include "structures/ASTNode.hpp"
+    #include "structures/SymbolTable.hpp"
 
     /* Definitions */
 namespace Cminus
 {
+    using namespace std;
+
     /* Driver Class */
     class Driver
     {
@@ -23,10 +29,13 @@ namespace Cminus
             std::string FileName;
             bool trace_parsing;
             bool trace_scanning;
-            std::vector<std::string> Types;
-            std::unordered_map<std::string, int*> Variables;
 
+            std::vector<std::string> Types;
             int GetTypeID(std::string&& typeName);
+
+            StatementListASTNode* Root;
+            SymbolTable GlobalSymbolTable;
+            void Process(std::ostream& outputStream);
         private:
             Scanner* scanner;
     };

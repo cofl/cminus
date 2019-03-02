@@ -3,7 +3,7 @@ WORKING_DIRECTORY = build
 TEST_DIRECTORY = input
 CXX = g++
 
-RECENT_GCC_AVAILABLE :=$(shell [ `gcc -dumpversion | cut -c 1` -ge "7" ] && echo "YES" || echo "NO")
+RECENT_GCC_AVAILABLE :=$(shell [ `$(CXX) -dumpversion | cut -c 1` -ge "7" ] && echo "YES" || echo "NO")
 EVAL := eval
 
 # We use "EVAL" to choose eval or SCL, which acts like EVAL
@@ -38,10 +38,7 @@ clean:
 	rm -f $(TARGET)
 
 test: $(TARGET)
-	for item in `ls $(TEST_DIRECTORY)/*.cm`; do \
-		echo Testing $$item ; \
-		./$(TARGET) $$item ; \
-	done
+	$(MAKE) -C $(TEST_DIRECTORY) all
 
 clean_test:
-	rm -f $(TEST_DIRECTORY)/*.s
+	$(MAKE) -C $(TEST_DIRECTORY) clean
