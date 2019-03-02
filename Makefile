@@ -4,6 +4,7 @@ TEST_DIRECTORY = input
 CXX = g++
 
 RECENT_GCC_AVAILABLE :=$(shell [ `$(CXX) -dumpversion | cut -c 1` -ge "7" ] && echo "YES" || echo "NO")
+SCL_AVAILABLE :=$(shell which scl)
 EVAL := eval
 
 # We use "EVAL" to choose eval or SCL, which acts like EVAL
