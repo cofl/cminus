@@ -374,6 +374,7 @@ namespace Cminus { namespace Structures
         auto rsrn = state.RegisterNames32[rsri];
         LeftSide->Emit(state, destinationRegister);
         RightSide->Emit(state, rsrn);
+        auto dst8 = state.GetRegister8(destinationRegister);
         switch(Operation)
         {
             case ASTOperationType::Exponentiation:
@@ -401,41 +402,48 @@ namespace Cminus { namespace Structures
                 state.OutputStream << "\tor " << destinationRegister << ", " << rsrn << endl;
                 break;
             case ASTOperationType::LogicalOr:
-                state.OutputStream << "\tor " << destinationRegister << ", " << rsrn        << endl
-                                   << "\tcmp " << destinationRegister << ", 0"              << endl
-                                   << "\tsetnz " << state.GetRegister8(destinationRegister) << endl;
+                state.OutputStream << "\tor "    << destinationRegister << ", " << rsrn << endl
+                                   << "\tcmp "   << destinationRegister << ", 0"        << endl
+                                   << "\tsetnz " << dst8                                << endl
+                                   << "\tmovzx " << destinationRegister << ", " << dst8 << endl;
                 break;
             case ASTOperationType::BinaryAnd:
                 state.OutputStream << "\tand " << destinationRegister << ", " << rsrn << endl;
                 break;
             case ASTOperationType::LogicalAnd:
-                state.OutputStream << "\tand " << destinationRegister << ", " << rsrn        << endl
-                                   << "\tcmp " << destinationRegister << ", 0"               << endl
-                                   << "\tsetnz " << state.GetRegister8(destinationRegister) << endl;
+                state.OutputStream << "\ttest "  << destinationRegister << ", " << rsrn << endl
+                                   << "\tsetnz " << dst8                                << endl
+                                   << "\tmovzx " << destinationRegister << ", " << dst8 << endl;
                 break;
             case ASTOperationType::TestGT:
-                state.OutputStream << "\tcmp " << destinationRegister << ", " << rsrn       << endl
-                                   << "\tsetg " << state.GetRegister8(destinationRegister) << endl;
+                state.OutputStream << "\tcmp "   << destinationRegister << ", " << rsrn << endl
+                                   << "\tsetg "  << dst8                                << endl
+                                   << "\tmovzx " << destinationRegister << ", " << dst8 << endl;
                 break;
             case ASTOperationType::TestGE:
-                state.OutputStream << "\tcmp " << destinationRegister << ", " << rsrn        << endl
-                                   << "\tsetge " << state.GetRegister8(destinationRegister) << endl;
+                state.OutputStream << "\tcmp "   << destinationRegister << ", " << rsrn << endl
+                                   << "\tsetge " << dst8                                << endl
+                                   << "\tmovzx " << destinationRegister << ", " << dst8 << endl;
                 break;
             case ASTOperationType::TestLT:
-                state.OutputStream << "\tcmp " << destinationRegister << ", " << rsrn       << endl
-                                   << "\tsetl " << state.GetRegister8(destinationRegister) << endl;
+                state.OutputStream << "\tcmp "   << destinationRegister << ", " << rsrn << endl
+                                   << "\tsetl "  << dst8                                << endl
+                                   << "\tmovzx " << destinationRegister << ", " << dst8 << endl;
                 break;
             case ASTOperationType::TestLE:
-                state.OutputStream << "\tcmp " << destinationRegister << ", " << rsrn        << endl
-                                   << "\tsetle " << state.GetRegister8(destinationRegister) << endl;
+                state.OutputStream << "\tcmp "   << destinationRegister << ", " << rsrn << endl
+                                   << "\tsetle " << dst8                                << endl
+                                   << "\tmovzx " << destinationRegister << ", " << dst8 << endl;
                 break;
             case ASTOperationType::TestNE:
-                state.OutputStream << "\tcmp " << destinationRegister << ", " << rsrn        << endl
-                                   << "\tsetnz " << state.GetRegister8(destinationRegister) << endl;
+                state.OutputStream << "\tcmp "   << destinationRegister << ", " << rsrn << endl
+                                   << "\tsetnz " << dst8                                << endl
+                                   << "\tmovzx " << destinationRegister << ", " << dst8 << endl;
                 break;
             case ASTOperationType::TestEQ:
-                state.OutputStream << "\tcmp " << destinationRegister << ", " << rsrn       << endl
-                                   << "\tsetz " << state.GetRegister8(destinationRegister) << endl;
+                state.OutputStream << "\tcmp "   << destinationRegister << ", " << rsrn << endl
+                                   << "\tsetz "  << dst8                                << endl
+                                   << "\tmovzx " << destinationRegister << ", " << dst8 << endl;
                 break;
             default:
                 state.OutputStream << "{{unrecognized binary operation}}";
@@ -455,8 +463,10 @@ namespace Cminus { namespace Structures
                 state.OutputStream << "\tnot " << destinationRegister << endl;
                 break;
             case ASTOperationType::LogicalNot:
-                state.OutputStream << "\tcmp " << destinationRegister << ", 0" << endl
-                                   << "\tsetz " << state.GetRegister8(destinationRegister) << endl;
+                auto dst8 = state.GetRegister8(destinationRegister);
+                state.OutputStream << "\tcmp "   << destinationRegister << ", 0"        << endl
+                                   << "\tsetz "  << dst8                                << endl
+                                   << "\tmovzx " << destinationRegister << ", " << dst8 << endl;
                 break;
             default:
                 state.OutputStream << "{{Unrecognized Unary Operation}}";
