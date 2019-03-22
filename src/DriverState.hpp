@@ -18,6 +18,8 @@ namespace Cminus
             ostream& OutputStream;
             vector<Structures::SymbolTable*> SymbolStack;
             vector<string> StringConstants;
+            vector<int> BreakLabels;
+            vector<int> ContinueLabels;
             int AddStringConstant(string& value);
 
             vector<string>* Types;
@@ -29,11 +31,15 @@ namespace Cminus
             int GetRegisterID(string&& registerName);
             const char* GetRegister8(string&& registerName);
             bool FreeRegisters[14];
-            void SaveRegisters(const char* registerName...);
+            void SaveRegisters(int count, ...);
             void RestoreRegisters();
+            int TemporaryLabelIndex;
+            int GetBreakLabel();
+            int GetContinueLabel();
+            int BaseOffset;
         private:
             const char* RegisterNames8[14];
-            vector<vector<char*>> SavedRegisters;
+            vector<vector<const char*>*> SavedRegisters;
             map<string,int> RegisterNameToId;
     };
 }

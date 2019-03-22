@@ -45,12 +45,16 @@ Cminus::parser::symbol_type yylex(Cminus::Driver& driverInstance);
     WHILE
     WRITE
     RETURN
+    FOR
+    BREAK
+    CONTINUE
 ;
 
 /* Literals */
 %token <std::string>
     STRING
     IDENTIFIER
+    ASM
 ;
 
 %token <int> INTCON
@@ -117,14 +121,16 @@ Cminus::parser::symbol_type yylex(Cminus::Driver& driverInstance);
 %type <int> Type
 %type <StringLiteralASTNode*> StringConstant
 %type <IntegerLiteralASTNode*> IntegerConstant
-%type <ExpressionASTNode*> Variable Factor Expr BnotExpr ExpntExpr MulExpr AddExpr ShiftExpr SimpleExpr LogicExpr AssignExpr AccessExpr NegationExpr
+%type <ExpressionASTNode*> Variable Factor Expr BnotExpr ExpntExpr MulExpr AddExpr ShiftExpr SimpleExpr LogicExpr AssignExpr NegationExpr OptionalExpr
 %type <ExpressionListASTNode*> ExprList
-%type <ASTNode*> Statement ExitStatement ReturnStatement WhileStatement IfStatement IOStatement
+%type <ASTNode*> Statement ExitStatement ReturnStatement WhileStatement IfStatement IOStatement ForStatement
 %type <StatementListASTNode*> StatementList
 %type <SingleVariableDeclarationASTNode*> VarDecl
 %type <VariableDeclarationASTNode*> VariableDecl IdentifierList
 %type <FunctionDeclarationASTNode*> ProcedureDecl
 %type <StatementListASTNode*> DeclList Procedures
+%type <SimpleDeclarationASTNode*> FuncArg
+%type <vector<SimpleDeclarationASTNode*>*> FuncArguments
 
 %start Program
 %%
@@ -157,11 +163,24 @@ Procedures          : ProcedureDecl
                     }
                     ;
 
-ProcedureDecl       : Type IDENTIFIER "(" ")" "{" StatementList[Body] "}"
+ProcedureDecl       : Type IDENTIFIER "(" FuncArguments[Args] ")" "{" StatementList[Body] "}"
+                    {
+                        $$ = new FunctionDeclarationASTNode($2, $Body);
+                        $$->Type = $1;
+                        $$->Arguments = $Args;
+                    }
+                    | Type IDENTIFIER "(" ")" "{" StatementList[Body] "}"
                     {
                         $$ = new FunctionDeclarationASTNode($2, $Body);
                         $$->Type = $1;
                     }
+                    ;
+
+FuncArguments       : FuncArguments "," FuncArg { $$ = $1; $$->push_back($3); }
+                    | FuncArg                   { $$ = new vector<SimpleDeclarationASTNode*>(); $$->push_back($1); }
+                    ;
+
+FuncArg             : Type IDENTIFIER           { $$ = new SimpleDeclarationASTNode($1, $2); }
                     ;
 
 DeclList            : VariableDecl
@@ -195,16 +214,16 @@ IdentifierList      : VarDecl
                     }
                     ;
 
-VarDecl             : IDENTIFIER                         { $$ = new SingleVariableDeclarationASTNode($1, false, 0); }
-                    | IDENTIFIER "[" IntegerConstant "]" { $$ = new SingleVariableDeclarationASTNode($1, true, $3); }
-                    | IDENTIFIER "=" LogicExpr           { $$ = new SingleVariableDeclarationASTNode($1, false, 0, $3); }
+VarDecl             : IDENTIFIER                         { $$ = new SingleVariableDeclarationASTNode($1, 1); }
+                    | IDENTIFIER "[" IntegerConstant "]" { $$ = new SingleVariableDeclarationASTNode($1, $3->Value); }
+                    | IDENTIFIER "=" LogicExpr           { $$ = new SingleVariableDeclarationASTNode($1, 1, $3); }
                     | IDENTIFIER "[" IntegerConstant "]" "=" Expr[Value]
                     {
-                        $$ = new SingleVariableDeclarationASTNode($1, true, $3, $Value);
+                        $$ = new SingleVariableDeclarationASTNode($1, $3->Value, $Value);
                     }
                     | IDENTIFIER "[" IntegerConstant "]" "=" "{" ExprList[List] "}"
                     {
-                        $$ = new SingleVariableDeclarationASTNode($1, true, $3, $List);
+                        $$ = new SingleVariableDeclarationASTNode($1, $3->Value, $List);
                     }
                     ;
 
@@ -214,11 +233,16 @@ Type                : INTEGER               { $$ = DriverInstance.GetTypeID("int
 Statement           : "{" StatementList "}" { $$ = $2; }
                     | IfStatement           { $$ = $1; }
                     | WhileStatement        { $$ = $1; }
+                    | ForStatement          { $$ = $1; }
                     | IOStatement           { $$ = $1; }
                     | ReturnStatement       { $$ = $1; }
                     | ExitStatement         { $$ = $1; }
                     | Expr ";"              { $$ = $1; }
                     | VariableDecl          { $$ = $1; }
+                    | BREAK ";"             { $$ = new BreakStatementASTNode(); }
+                    | CONTINUE ";"          { $$ = new ContinueStatementASTNode(); }
+                    | ";"                   { $$ = new NopStatementASTNode(); }
+                    | ASM                   { $$ = new ASMASTNode($1); }
                     ;
 
 IfStatement         : IF "(" Expr[Test] ")" Statement[IfTrueBody] %prec NO_ELSE
@@ -234,20 +258,16 @@ IfStatement         : IF "(" Expr[Test] ")" Statement[IfTrueBody] %prec NO_ELSE
 WhileStatement      : WHILE "(" Expr[Test] ")" Statement[Body] { $$ = new WhileStatementASTNode($Test, $Body); }
                     ;
 
-IOStatement         : READ "(" Variable ")" ";"
-                    {
-                        if(!($3->NodeType == ASTNodeType::Variable || ($3->NodeType == ASTNodeType::BinaryOperation
-                            && ((BinaryOperationASTNode*)$3)->Operation == ASTOperationType::ArrayAccess)))
-                        {
-                            throw "Read call argument is not an lvalue.";
-                        }
-                        $$ = new ReadCallASTNode($3);
-                    }
+ForStatement        : FOR "(" OptionalExpr[Initial] ";" Expr[Test] ";" OptionalExpr[Final] ")" Statement[Body]
+                        { $$ = new ForStatementASTNode($Initial, $Test, $Final, $Body); }
+                    ;
+
+IOStatement         : READ "(" Variable ")" ";"         { $$ = new ReadCallASTNode($3);  }
                     | WRITE "(" Expr ")" ";"            { $$ = new WriteCallASTNode($3); }
                     | WRITE "(" StringConstant ")" ";"  { $$ = new WriteCallASTNode($3); }
                     ;
 
-ReturnStatement     : RETURN Expr ";"             { $$ = new ReturnStatementASTNode(nullptr); }
+ReturnStatement     : RETURN OptionalExpr ";"             { $$ = new ReturnStatementASTNode($2); }
                     ;
 
 ExitStatement       : EXIT ";"                    { $$ = new ExitStatementASTNode(); }
@@ -263,6 +283,10 @@ StatementList       : Statement
                         $$ = $1;
                         $$->Members.push_back($2);
                     }
+                    ;
+
+OptionalExpr        : Expr  { $$ = $1; }
+                    |       { $$ = nullptr; }
                     ;
 
 Expr                : LogicExpr                   { $$ = $1; }
@@ -352,21 +376,19 @@ BnotExpr            : NegationExpr                { $$ = $1; }
                     | BNOT BnotExpr               { $$ = new UnaryOperationASTNode(ASTOperationType::BinaryNot, $2); }
                     ;
 
-NegationExpr        : AccessExpr                  { $$ = $1; }
+NegationExpr        : Factor                  { $$ = $1; }
                     | MINUS NegationExpr          { $$ = new UnaryOperationASTNode(ASTOperationType::Negation, $2); }
-                    ;
-
-AccessExpr          : Factor                      { $$ = $1; }
-                    | AccessExpr "[" Expr "]"     { $$ = new BinaryOperationASTNode(ASTOperationType::ArrayAccess, $1, $3); }
                     ;
 
 Factor              : IntegerConstant             { $$ = $1; }
                     | Variable                    { $$ = $1; }
                     | "(" Expr ")"                { $$ = $2; }
                     | IDENTIFIER "(" ")"          { $$ = new FunctionCallASTNode($1); }
+                    | IDENTIFIER "(" ExprList ")" { $$ = new FunctionCallASTNode($1, $3); }
                     ;
 
 Variable            : IDENTIFIER                  { $$ = new VariableASTNode($1); }
+                    | IDENTIFIER "[" Expr "]"     { $$ = new VariableASTNode($1, $3); }
                     ;
 
 IntegerConstant     : INTCON                      { $$ = new IntegerLiteralASTNode(DriverInstance.GetTypeID("int"), $1); }

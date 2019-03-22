@@ -26,17 +26,20 @@ namespace Cminus { namespace Structures
     WhileStatementASTNode::WhileStatementASTNode(ExpressionASTNode* test, ASTNode* body)
         : ASTNode(ASTNodeType::While), Test(test), Body(body) {}
 
+    ForStatementASTNode::ForStatementASTNode(ExpressionASTNode* initial, ExpressionASTNode* test, ExpressionASTNode* step, ASTNode* body)
+        : ASTNode(ASTNodeType::For), Initial(initial), Test(test), Step(step), Body(body) {}
+
     ReturnStatementASTNode::ReturnStatementASTNode(ExpressionASTNode* value)
         : ASTNode(ASTNodeType::Return), Value(value) {}
 
-    SingleVariableDeclarationASTNode::SingleVariableDeclarationASTNode(std::string id, bool isArray, IntegerLiteralASTNode* arraySize)
-        : ID(id), IsArray(isArray), ArraySize(arraySize), InitialValue(nullptr) {}
+    SingleVariableDeclarationASTNode::SingleVariableDeclarationASTNode(std::string id, int arraySize)
+        : ID(id), ArraySize(arraySize), InitialValue(nullptr) {}
 
-    SingleVariableDeclarationASTNode::SingleVariableDeclarationASTNode(std::string id, bool isArray, IntegerLiteralASTNode* arraySize, ExpressionASTNode* initialValue)
-        : ID(id), IsArray(isArray), ArraySize(arraySize), InitialValue(initialValue) {}
+    SingleVariableDeclarationASTNode::SingleVariableDeclarationASTNode(std::string id, int arraySize, ExpressionASTNode* initialValue)
+        : ID(id), ArraySize(arraySize), InitialValue(initialValue) {}
 
     FunctionDeclarationASTNode::FunctionDeclarationASTNode(std::string id, StatementListASTNode* body)
-        : ASTNode(ASTNodeType::FunctionDeclaration), ID(id), Body(body) {}
+        : ASTNode(ASTNodeType::FunctionDeclaration), ID(id), Body(body), Arguments(nullptr) {}
 
     ExpressionListASTNode::ExpressionListASTNode()
         : ExpressionASTNode(ASTNodeType::FunctionDeclaration)
@@ -45,13 +48,26 @@ namespace Cminus { namespace Structures
     }
 
     FunctionCallASTNode::FunctionCallASTNode(std::string id)
-        : ExpressionASTNode(ASTNodeType::FunctionCall), ID(id)
+        : ExpressionASTNode(ASTNodeType::FunctionCall), ID(id), Arguments()
     {
         // TODO: type
     }
 
+    FunctionCallASTNode::FunctionCallASTNode(std::string id, ExpressionListASTNode* args)
+        : ExpressionASTNode(ASTNodeType::FunctionCall), ID(id)
+    {
+        Arguments = args->Members;
+    }
+
     VariableASTNode::VariableASTNode(std::string id)
-        : ExpressionASTNode(ASTNodeType::Variable), ID(id)
+        : ExpressionASTNode(ASTNodeType::Variable), ID(id), ArrayIndex(nullptr)
+    {
+        IsLValue = true;
+        // TODO: type
+    }
+
+    VariableASTNode::VariableASTNode(std::string id, ExpressionASTNode* arrayIndex)
+        : ExpressionASTNode(ASTNodeType::Variable), ID(id), ArrayIndex(arrayIndex)
     {
         IsLValue = true;
         // TODO: type
@@ -78,11 +94,17 @@ namespace Cminus { namespace Structures
     VariableDeclarationASTNode::VariableDeclarationASTNode()
         : ASTNode(ASTNodeType::VariableDeclaration) {}
 
+    NopStatementASTNode::NopStatementASTNode()
+        : ASTNode(ASTNodeType::Nop) {}
+
     ExitStatementASTNode::ExitStatementASTNode()
         : ASTNode(ASTNodeType::Exit) {}
 
     BreakStatementASTNode::BreakStatementASTNode()
         : ASTNode(ASTNodeType::Break) {}
+
+    ContinueStatementASTNode::ContinueStatementASTNode()
+        : ASTNode(ASTNodeType::Continue) {}
 
     IntegerLiteralASTNode::IntegerLiteralASTNode(int typeID, int value)
         : ExpressionASTNode(ASTNodeType::IntegerLiteral, typeID), Value(value)
@@ -94,5 +116,17 @@ namespace Cminus { namespace Structures
         : ExpressionASTNode(ASTNodeType::StringLiteral, typeID), Value(value)
     {
         IsConstant = true;
+    }
+
+    ASMASTNode::ASMASTNode(string value)
+        : ASTNode(ASTNodeType::ASM), Value(value)
+    {
+        // nop
+    }
+
+    SimpleDeclarationASTNode::SimpleDeclarationASTNode(int typeID, string id)
+        : Type(typeID), ID(id)
+    {
+        // nop
     }
 }}

@@ -1,0 +1,15 @@
+int print(int i)
+{
+    int k;
+    k = i;
+    asm {
+        mov edi, $k
+        add edi, 48
+        call putchar@PLT
+    }
+}
+
+int main()
+{
+    print(5);
+}

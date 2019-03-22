@@ -1,0 +1,14 @@
+int main()
+{
+    int a;
+    for(a = 1; a <= 100; a += 1)
+    {
+        if(a % 15 == 0)
+            write("FizzBuzz");
+        else if(a % 3 == 0)
+            write("Fizz");
+        else if(a % 5 == 0)
+            write("Buzz");
+        else write(a);
+    }
+}

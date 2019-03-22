@@ -2,6 +2,7 @@
 #include <fstream>
 #include <cerrno>
 #include <cstring>
+#include <cstdarg>
 #include <unordered_map>
 #include "CminusDriver.hpp"
 #include "DriverState.hpp"
@@ -62,6 +63,8 @@ namespace Cminus {
         vector<string>* types)
         : OutputStream(outputStream),
           SymbolStack(),
+          BreakLabels(),
+          ContinueLabels(),
           FileName(fileName),
           Types(types),
           RegisterNames8 {
@@ -87,7 +90,8 @@ namespace Cminus {
               true, true, true, true,
               true, true, true, true,
               true, true
-          }
+          },
+          TemporaryLabelIndex(1)
     {
         SymbolStack.push_back(globalTable);
         for(int i = 0; i < 14; i += 1)
@@ -96,6 +100,39 @@ namespace Cminus {
             RegisterNameToId[RegisterNames64[i]] = i;
             RegisterNameToId[RegisterNames8[i]] = i;
         }
+    }
+
+    void DriverState::SaveRegisters(int count, ...)
+    {
+        auto saved = new vector<const char*>();
+        va_list args;
+        va_start(args, count);
+        for(;count > 0; count -= 1)
+        {
+            auto reg = va_arg(args, const char*);
+            auto regi = RegisterNameToId[reg];
+            if(!FreeRegisters[regi])
+            {
+                saved->push_back(reg);
+                OutputStream << "\tpush " << reg << endl;
+                FreeRegisters[regi] = true;
+            }
+        }
+        SavedRegisters.push_back(saved);
+    }
+
+    void DriverState::RestoreRegisters()
+    {
+        auto saved = SavedRegisters.back();
+        SavedRegisters.pop_back();
+        for(int i = saved->size() - 1; i >= 0; i -= 1)
+        {
+            auto member = saved->at(i);
+            auto regi = RegisterNameToId[member];
+            OutputStream << "\tpop " << member << endl;
+            FreeRegisters[regi] = false;
+        }
+        delete saved;
     }
 
     int DriverState::AddStringConstant(string& value)
@@ -142,5 +179,15 @@ namespace Cminus {
         if(it != RegisterNameToId.end())
             return RegisterNames8[it->second];
         return nullptr;
+    }
+
+    int DriverState::GetBreakLabel()
+    {
+        return BreakLabels.size() > 0 ? BreakLabels.back() : -1;
+    }
+
+    int DriverState::GetContinueLabel()
+    {
+        return ContinueLabels.size() > 0 ? ContinueLabels.back() : -1;
     }
 }

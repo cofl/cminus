@@ -4,6 +4,7 @@
 #include <vector>
 #include <map>
 #include <string>
+
 namespace Cminus { namespace Structures
 {
     using namespace std;
@@ -16,10 +17,11 @@ namespace Cminus { namespace Structures
             VariableState(SymbolTable* introducedTable);
             SymbolTable* IntroducedTable;
             int Type;
-            bool ArraySize;
+            int ArraySize;
             int* InitialValue;
-            string Location;
             bool IsGlobal;
+            string GlobalLocation;
+            int StackOffset;
     };
 
     class FunctionArgument

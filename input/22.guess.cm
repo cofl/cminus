@@ -1,0 +1,38 @@
+int getARandomNumber()
+{
+    srand(time(0));
+    return rand() % 100 + 1;
+}
+
+int main()
+{
+    int a, value;
+    value = getARandomNumber();
+    while(1)
+    {
+        write("Enter a number between 1 and 100:");
+        read(a);
+
+        if (a < 1)
+        {
+            write("That's way too low!");
+            continue;
+        } else if (a > 100)
+        {
+            write("That's way too high!");
+            continue;
+        }
+
+        if (a < value) {
+            write("That's too low!");
+            continue;
+        } else if (a > value)
+        {
+            write("That's too high!");
+            continue;
+        }
+
+        write("You guessed right!");
+        break;
+    }
+}

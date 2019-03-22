@@ -1,6 +1,6 @@
 WS  [ \t\r]
 HEX [a-fA-F0-9]
-String  \"[^\\\"]*(\\([\\\"abfnrtv'?0]|[xX][a-fA-F0-9][a-fA-F0-9])[^\\\"]*)*\"
+ID  [a-zA-Z_][a-zA-Z0-9_]*
 
 %{
 #include<iostream>
@@ -35,6 +35,8 @@ using Parser = Cminus::parser;
 %x LINE_COMMENT
 %x STRING
 %x STRING_ESCAPE
+%x ASM_INITIAL
+%x ASM_BODY
 %%
 %{
     /* run inside the function */
@@ -65,6 +67,18 @@ if       return Parser::make_IF(location);
 read     return Parser::make_READ(location);
 write    return Parser::make_WRITE(location);
 return   return Parser::make_RETURN(location);
+for      return Parser::make_FOR(location);
+break    return Parser::make_BREAK(location);
+continue return Parser::make_CONTINUE(location);
+asm      BEGIN(ASM_INITIAL);
+
+    /* ASM */
+<ASM_INITIAL>{WS}+ location.step();
+<ASM_INITIAL>\n+   STEP_LINES(YYLeng());
+<ASM_INITIAL>\{    BEGIN(ASM_BODY);
+<ASM_INITIAL>.     throw Parser::syntax_error(location, "Invalid charater: " + std::string(YYText()));
+<ASM_BODY>\}       BEGIN(INITIAL); return Parser::make_ASM(tempString.str(), location);
+<ASM_BODY>[^\}]+   tempString << YYText();
 
     /* Operators */
 "~"      return Parser::make_BNOT(location);
@@ -112,9 +126,9 @@ return   return Parser::make_RETURN(location);
 ","      return Parser::make_COMMA(location);
 
     /* Literals */
-[a-zA-Z_][a-zA-Z0-9_]* return Parser::make_IDENTIFIER(YYText(), location);
-0[xX][0-9a-fA-F]+      return Parser::make_INTCON(stoi(YYText(), nullptr, 16), location);
-[0-9]+                 return Parser::make_INTCON(stoi(YYText(), nullptr, 10), location);
+{ID}              return Parser::make_IDENTIFIER(YYText(), location);
+0[xX][0-9a-fA-F]+ return Parser::make_INTCON(stoi(YYText(), nullptr, 16), location);
+[0-9]+            return Parser::make_INTCON(stoi(YYText(), nullptr, 10), location);
 
     /* Strings */
 \"                          BEGIN(STRING);

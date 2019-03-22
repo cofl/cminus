@@ -13,7 +13,6 @@ namespace Cminus { namespace Structures
     enum class ASTOperationType
     {
         Literal,
-        ArrayAccess,
         Negation,
         BinaryNot,
         LogicalNot,
@@ -44,6 +43,7 @@ namespace Cminus { namespace Structures
         StatementList,
         If,
         While,
+        For,
         FunctionDeclaration,
         VariableDeclaration,
         IntegerLiteral,
@@ -58,7 +58,10 @@ namespace Cminus { namespace Structures
         BinaryOperation,
         Return,
         Exit,
-        Break
+        Break,
+        Continue,
+        Nop,
+        ASM
     };
 
     class ASTNode
@@ -142,22 +145,13 @@ namespace Cminus { namespace Structures
     {
         public:
             VariableASTNode(std::string id);
+            VariableASTNode(std::string id, ExpressionASTNode* index);
             std::string ID;
+            ExpressionASTNode* ArrayIndex;
 
             ASTNode* Check(DriverState& state);
             void Emit(DriverState& state, const char* destinationRegister);
             void EmitLValue(DriverState& state, const char* destinationRegister);
-    };
-
-    class FunctionCallASTNode : public ExpressionASTNode
-    {
-        public:
-            FunctionCallASTNode(std::string id);
-            std::string ID;
-            std::vector<ExpressionASTNode*> Arguments;
-
-            ASTNode* Check(DriverState& state);
-            void Emit(DriverState& state, const char* destinationRegister);
     };
 
     class ExpressionListASTNode : public ExpressionASTNode
@@ -165,6 +159,18 @@ namespace Cminus { namespace Structures
         public:
             ExpressionListASTNode();
             std::vector<ExpressionASTNode*> Members;
+
+            ASTNode* Check(DriverState& state);
+            void Emit(DriverState& state, const char* destinationRegister);
+    };
+
+    class FunctionCallASTNode : public ExpressionASTNode
+    {
+        public:
+            FunctionCallASTNode(std::string id);
+            FunctionCallASTNode(std::string id, ExpressionListASTNode* args);
+            std::string ID;
+            std::vector<ExpressionASTNode*> Arguments;
 
             ASTNode* Check(DriverState& state);
             void Emit(DriverState& state, const char* destinationRegister);
@@ -187,8 +193,6 @@ namespace Cminus { namespace Structures
             SimpleDeclarationASTNode(int typeID, std::string id);
             int Type;
             std::string ID;
-
-            void Emit(DriverState& state);
     };
 
     class FunctionDeclarationASTNode : public ASTNode
@@ -197,7 +201,7 @@ namespace Cminus { namespace Structures
             FunctionDeclarationASTNode(std::string id, StatementListASTNode* body);
             int Type;
             std::string ID;
-            std::vector<SimpleDeclarationASTNode*> Arguments;
+            std::vector<SimpleDeclarationASTNode*>* Arguments;
             StatementListASTNode* Body;
 
             ASTNode* Check(DriverState& state);
@@ -207,12 +211,11 @@ namespace Cminus { namespace Structures
     class SingleVariableDeclarationASTNode
     {
         public:
-            SingleVariableDeclarationASTNode(std::string id, bool isArray, IntegerLiteralASTNode* arraySize);
-            SingleVariableDeclarationASTNode(std::string id, bool isArray, IntegerLiteralASTNode* arraySize, ExpressionASTNode* initialValue);
+            SingleVariableDeclarationASTNode(std::string id, int arraySize);
+            SingleVariableDeclarationASTNode(std::string id, int arraySize, ExpressionASTNode* initialValue);
             std::string ID;
             ExpressionASTNode* InitialValue;
-            bool IsArray;
-            IntegerLiteralASTNode* ArraySize;
+            int ArraySize;
 
             void Emit(DriverState& state);
     };
@@ -225,6 +228,14 @@ namespace Cminus { namespace Structures
             std::vector<SingleVariableDeclarationASTNode*> Members;
 
             ASTNode* Check(DriverState& state);
+            void Emit(DriverState& state);
+    };
+
+    class NopStatementASTNode : public ASTNode
+    {
+        public:
+            NopStatementASTNode();
+
             void Emit(DriverState& state);
     };
 
@@ -241,6 +252,16 @@ namespace Cminus { namespace Structures
         public:
             BreakStatementASTNode();
 
+            ASTNode* Check(DriverState& state);
+            void Emit(DriverState& state);
+    };
+
+    class ContinueStatementASTNode : public ASTNode
+    {
+        public:
+            ContinueStatementASTNode();
+
+            ASTNode* Check(DriverState& state);
             void Emit(DriverState& state);
     };
 
@@ -259,6 +280,19 @@ namespace Cminus { namespace Structures
         public:
             WhileStatementASTNode(ExpressionASTNode* test, ASTNode* body);
             ExpressionASTNode* Test;
+            ASTNode* Body;
+
+            ASTNode* Check(DriverState& state);
+            void Emit(DriverState& state);
+    };
+
+    class ForStatementASTNode : public ASTNode
+    {
+        public:
+            ForStatementASTNode(ExpressionASTNode* initial, ExpressionASTNode* test, ExpressionASTNode* step, ASTNode* body);
+            ExpressionASTNode* Initial;
+            ExpressionASTNode* Test;
+            ExpressionASTNode* Step;
             ASTNode* Body;
 
             ASTNode* Check(DriverState& state);
@@ -295,6 +329,15 @@ namespace Cminus { namespace Structures
             ExpressionASTNode* Value;
 
             ASTNode* Check(DriverState& state);
+            void Emit(DriverState& state);
+    };
+
+    class ASMASTNode : public ASTNode
+    {
+        public:
+            ASMASTNode(string value);
+            string Value;
+
             void Emit(DriverState& state);
     };
 }}

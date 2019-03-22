@@ -30,8 +30,10 @@ namespace Cminus { namespace Structures
         if(nullptr == Symbols)
         {
             Symbols = state.SymbolStack.back();
-            //Symbols = new SymbolTable(state.SymbolStack.back());
-            //state.SymbolStack.push_back(Symbols);
+        } else
+        {
+            Symbols = new SymbolTable(state.SymbolStack.back());
+            state.SymbolStack.push_back(Symbols);
         }
         for(auto const& member: Members)
         {
@@ -50,8 +52,8 @@ namespace Cminus { namespace Structures
             auto data = scope->AddVariable(member->ID);
             data->Type = this->Type;
             data->InitialValue = nullptr;
-            //data->ArraySize = member->IsArray ? member->ArraySize : -1;
-            // TODO: initializer, array size
+            data->ArraySize = member->ArraySize;
+            // TODO: initializer
         }
         return this;
     }
@@ -59,23 +61,25 @@ namespace Cminus { namespace Structures
     ASTNode* FunctionDeclarationASTNode::Check(DriverState& state)
     {
         auto scope = state.SymbolStack.back();
-        auto functionScope = new SymbolTable(scope);
+        Symbols = new SymbolTable(scope);
 
         auto data = scope->AddFunction(this->ID);
         data->ReturnType = this->Type;
-        for(auto const& member: Arguments)
+        if(nullptr != Arguments)
         {
-            FunctionArgument argument;
-            argument.Name = member->ID;
-            argument.TypeID = member->Type;
-            data->Arguments.push_back(argument);
+            for(auto&& member: *Arguments)
+            {
+                FunctionArgument argument;
+                argument.Name = member->ID;
+                argument.TypeID = member->Type;
+                data->Arguments.push_back(argument);
 
-            auto argumentData = functionScope->AddVariable(member->ID);
-            argumentData->Type = member->Type;
+                auto argumentData = Symbols->AddVariable(member->ID);
+                argumentData->Type = member->Type;
+            }
         }
-
-        state.SymbolStack.push_back(functionScope);
-        Body->Symbols = functionScope;
+        state.SymbolStack.push_back(Symbols);
+        Body->Symbols = Symbols;
         Body->Check(state);
         return this;
     }
@@ -97,7 +101,7 @@ namespace Cminus { namespace Structures
         Member->Check(state);
         if(Member->IsConstant)
         {
-
+            // TODO
         }
         this->Type = Member->Type;
         return this;
@@ -106,13 +110,21 @@ namespace Cminus { namespace Structures
     ASTNode* FunctionCallASTNode::Check(DriverState& state)
     {
         auto data = Symbols->FindFunction(this->ID);
-        this->Type = data->ReturnType;
+        if(data == nullptr)
+        {
+            // if we haven't declared it, assume it's in the standard library.
+            this->Type = state.GetTypeID("int");
+            this->ID = this->ID.append("@PLT");
+        } else
+        {
+            this->Type = data->ReturnType;
+        }
         for(int i = 0; i < Arguments.size(); i += 1)
         {
             auto member = Arguments[i];
             member->Symbols = this->Symbols;
             member->Check(state);
-            if(member->Type != data->Arguments[i].TypeID)
+            if(nullptr != data && member->Type != data->Arguments[i].TypeID)
                 throw std::string("Nonmatching types on argument ").append(to_string(i)); // TODO: better message
         }
         return this;
@@ -122,6 +134,11 @@ namespace Cminus { namespace Structures
     {
         auto data = Symbols->FindVariable(this->ID);
         this->Type = data->Type;
+        if(nullptr != this->ArrayIndex)
+        {
+            this->ArrayIndex->Symbols = this->Symbols;
+            this->ArrayIndex->Check(state);
+        }
         return this;
     }
 
@@ -140,7 +157,48 @@ namespace Cminus { namespace Structures
         Test->Symbols = this->Symbols;
         Body->Symbols = this->Symbols;
         Test->Check(state);
+        state.BreakLabels.push_back(0);
+        state.ContinueLabels.push_back(0);
         Body->Check(state);
+        state.BreakLabels.pop_back();
+        state.ContinueLabels.pop_back();
+        return this;
+    }
+
+    ASTNode* ForStatementASTNode::Check(DriverState& state)
+    {
+        if(nullptr != Initial)
+        {
+            Initial->Symbols = this->Symbols;
+            Initial->Check(state);
+        }
+        if(nullptr != Step)
+        {
+            Step->Symbols = this->Symbols;
+            Step->Check(state);
+        }
+        Test->Symbols = this->Symbols;
+        Test->Check(state);
+        state.BreakLabels.push_back(0);
+        state.ContinueLabels.push_back(0);
+        Body->Symbols = this->Symbols;
+        Body->Check(state);
+        state.BreakLabels.pop_back();
+        state.ContinueLabels.pop_back();
+        return this;
+    }
+
+    ASTNode* BreakStatementASTNode::Check(DriverState& state)
+    {
+        if(state.BreakLabels.size() == 0)
+            throw "Illegal break statement.";
+        return this;
+    }
+
+    ASTNode* ContinueStatementASTNode::Check(DriverState& state)
+    {
+        if(state.ContinueLabels.size() == 0)
+            throw "Illegal continue statement.";
         return this;
     }
 
