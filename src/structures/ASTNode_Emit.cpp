@@ -512,39 +512,37 @@ namespace Cminus { namespace Structures
             if(dsti == eaxi)
             {
                 LeftSide->Emit(state, "eax");
-                state.OutputStream << "\tpush rdx"   << endl
-                                   << "\tmov edx, 0" << endl;
+                state.SaveRegisters(1, "rdx");
+                state.OutputStream << "\tmov edx, 0" << endl;
                 auto rsri = state.GetFreeRegister();
                 auto rsrn = state.RegisterNames32[rsri];
                 RightSide->Emit(state, rsrn);
-                state.OutputStream << "\tidiv " << rsrn << endl
-                                   << "\tpop rdx"       << endl;
+                state.OutputStream << "\tidiv " << rsrn << endl;
+                state.RestoreRegisters();
                 state.ReleaseRegister(rsri);
             } else if(dsti == edxi)
             {
-                state.OutputStream << "\tpush rax"  << endl;
+                state.SaveRegisters(1, "rax");
                 LeftSide->Emit(state, "eax");
                 state.OutputStream << "\tmov edx, 0" << endl;
                 auto rsri = state.GetFreeRegister();
                 auto rsrn = state.RegisterNames32[rsri];
                 RightSide->Emit(state, rsrn);
                 state.OutputStream << "\tidiv " << rsrn << endl
-                                   << "\tmov edx, eax"  << endl
-                                   << "\tpop rax"       << endl;
+                                   << "\tmov edx, eax"  << endl;
+                state.RestoreRegisters();
                 state.ReleaseRegister(rsri);
             } else
             {
-                state.OutputStream << "\tpush rax"  << endl
-                                   << "\tpush rdx"  << endl;
+                state.SaveRegisters(2, "rax", "rdx");
                 LeftSide->Emit(state, "eax");
                 state.OutputStream << "\tmov edx, 0" << endl;
                 auto rsri = state.GetFreeRegister();
                 auto rsrn = state.RegisterNames32[rsri];
                 RightSide->Emit(state, rsrn);
                 state.OutputStream << "\tidiv " << rsrn << endl
-                                   << "\tmov " << destinationRegister << ", eax"  << endl
-                                   << "\tpop rdx"       << endl
-                                   << "\tpop rax"       << endl;
+                                   << "\tmov " << destinationRegister << ", eax"  << endl;
+                state.RestoreRegisters();
                 state.ReleaseRegister(rsri);
             }
 
@@ -563,39 +561,38 @@ namespace Cminus { namespace Structures
             if(dsti == eaxi)
             {
                 LeftSide->Emit(state, "eax");
-                state.OutputStream << "\tpush rdx"   << endl
-                                   << "\tmov edx, 0" << endl;
+                state.SaveRegisters(1, "rdx");
+                state.OutputStream << "\tmov edx, 0" << endl;
                 auto rsri = state.GetFreeRegister();
                 auto rsrn = state.RegisterNames32[rsri];
                 RightSide->Emit(state, rsrn);
                 state.OutputStream << "\tidiv " << rsrn << endl
-                                   << "\tmov eax, edx"  << endl
-                                   << "\tpop rdx"       << endl;
+                                   << "\tmov eax, edx"  << endl;
+                state.RestoreRegisters();
                 state.ReleaseRegister(rsri);
             } else if(dsti == edxi)
             {
                 state.OutputStream << "\tpush rax"  << endl;
+                state.SaveRegisters(1, "rax");
                 LeftSide->Emit(state, "eax");
                 state.OutputStream << "\tmov edx, 0" << endl;
                 auto rsri = state.GetFreeRegister();
                 auto rsrn = state.RegisterNames32[rsri];
                 RightSide->Emit(state, rsrn);
-                state.OutputStream << "\tidiv " << rsrn << endl
-                                   << "\tpop rax"       << endl;
+                state.OutputStream << "\tidiv " << rsrn << endl;
+                state.RestoreRegisters();
                 state.ReleaseRegister(rsri);
             } else
             {
-                state.OutputStream << "\tpush rax"  << endl
-                                   << "\tpush rdx"  << endl;
+                state.SaveRegisters(2, "rax", "rdx");
                 LeftSide->Emit(state, "eax");
                 state.OutputStream << "\tmov edx, 0" << endl;
                 auto rsri = state.GetFreeRegister();
                 auto rsrn = state.RegisterNames32[rsri];
                 RightSide->Emit(state, rsrn);
                 state.OutputStream << "\tidiv " << rsrn << endl
-                                   << "\tmov " << destinationRegister << ", edx"  << endl
-                                   << "\tpop rdx"       << endl
-                                   << "\tpop rax"       << endl;
+                                   << "\tmov " << destinationRegister << ", edx"  << endl;
+                state.RestoreRegisters();
                 state.ReleaseRegister(rsri);
             }
 
