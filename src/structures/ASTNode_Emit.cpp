@@ -186,18 +186,33 @@ namespace Cminus { namespace Structures
         state.BreakLabels.push_back(afterLabel);
         if(nullptr != Initial)
             Initial->Emit(state);
-        Test->Emit(state, "eax");
-        state.OutputStream << "\tcmp eax, 0"               << endl
-                           << "\tje " << afterLabel << 'f' << endl
-                           << beginLabel << ':'            << endl;
+        if(nullptr != Test)
+        {
+            Test->Emit(state, "eax");
+            state.OutputStream << "\tcmp eax, 0"               << endl
+                               << "\tje " << afterLabel << 'f' << endl
+                               << beginLabel << ':'            << endl;
+        } else
+        {
+            state.OutputStream << beginLabel << ':'            << endl;
+        }
+        
         Body->Emit(state);
         state.OutputStream << stepLabel << ':' << endl;
         if(nullptr != Step)
             Step->Emit(state);
-        Test->Emit(state, "eax");
-        state.OutputStream << "\tcmp eax, 0"                << endl
-                           << "\tjnz " << beginLabel << 'b' << endl
-                           << afterLabel << ':'             << endl;
+        if(nullptr != Test)
+        {
+            Test->Emit(state, "eax");
+            state.OutputStream << "\tcmp eax, 0"                << endl
+                               << "\tjnz " << beginLabel << 'b' << endl
+                               << afterLabel << ':'             << endl;
+        } else
+        {
+            state.OutputStream << "\tjmp " << beginLabel << 'b' << endl
+                               << afterLabel << ':'             << endl;
+        }
+        
         state.BreakLabels.pop_back();
         state.ContinueLabels.pop_back();
     }

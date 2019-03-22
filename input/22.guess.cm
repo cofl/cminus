@@ -8,7 +8,7 @@ int main()
 {
     int a, value;
     value = getARandomNumber();
-    while(1)
+    for(;;)
     {
         write("Enter a number between 1 and 100:");
         read(a);

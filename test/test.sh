@@ -1,4 +1,4 @@
-ROOT=$(realpath ..)
+ROOT=$(realpath "$(dirname ${BASH_SOURCE[0]})/..")
 MTEST="$ROOT/test/test"
 CTEST="$ROOT/test/real"
 CMC="$ROOT/cmc"

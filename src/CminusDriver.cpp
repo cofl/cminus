@@ -47,7 +47,7 @@ namespace Cminus {
         DriverState state(outputStream, &GlobalSymbolTable, &FileName, &Types);
         Root->Symbols = &GlobalSymbolTable;
         Root->IsGlobal = true;
-        Root->Check(state);
+        Root = (StatementListASTNode*) Root->Check(state);
         Root->Emit(state);
     }
 

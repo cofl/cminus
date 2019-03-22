@@ -1,3 +1,4 @@
 [Bb]uild
 cmc
 input/*.s
+.vscode/ipch

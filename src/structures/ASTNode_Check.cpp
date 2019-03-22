@@ -16,10 +16,12 @@ namespace Cminus { namespace Structures
 
     ASTNode* ExpressionListASTNode::Check(DriverState& state)
     {
-        for(auto const& member: Members)
+        int len = Members.size();
+        for(int i = 0; i < len; i += 1)
         {
+            auto member = Members[i];
             member->Symbols = this->Symbols;
-            member->Check(state);
+            Members[i] = (ExpressionASTNode*) member->Check(state);
         }
         this->Type = Members.back()->Type;
         return this;
@@ -35,10 +37,12 @@ namespace Cminus { namespace Structures
             Symbols = new SymbolTable(state.SymbolStack.back());
             state.SymbolStack.push_back(Symbols);
         }
-        for(auto const& member: Members)
+        int len = Members.size();
+        for(int i = 0; i < len; i += 1)
         {
+            auto member = Members[i];
             member->Symbols = Symbols;
-            member->Check(state);
+            Members[i] = member->Check(state);
         }
         state.SymbolStack.pop_back(); // get our scope off the stack
         return this;
@@ -47,8 +51,10 @@ namespace Cminus { namespace Structures
     ASTNode* VariableDeclarationASTNode::Check(DriverState& state)
     {
         auto scope = state.SymbolStack.back();
-        for(auto const& member: Members)
+        int len = Members.size();
+        for(int i = 0; i < len; i += 1)
         {
+            auto member = Members[i];
             auto data = scope->AddVariable(member->ID);
             data->Type = this->Type;
             data->InitialValue = nullptr;
@@ -67,8 +73,10 @@ namespace Cminus { namespace Structures
         data->ReturnType = this->Type;
         if(nullptr != Arguments)
         {
-            for(auto&& member: *Arguments)
+            int len = Arguments->size();
+            for(int i = 0; i < len; i += 1)
             {
+                auto member = Arguments->at(i);
                 FunctionArgument argument;
                 argument.Name = member->ID;
                 argument.TypeID = member->Type;
@@ -80,7 +88,7 @@ namespace Cminus { namespace Structures
         }
         state.SymbolStack.push_back(Symbols);
         Body->Symbols = Symbols;
-        Body->Check(state);
+        Body = (StatementListASTNode*) Body->Check(state);
         return this;
     }
 
@@ -88,8 +96,8 @@ namespace Cminus { namespace Structures
     {
         LeftSide->Symbols = this->Symbols;
         RightSide->Symbols = this->Symbols;
-        LeftSide->Check(state);
-        RightSide->Check(state);
+        LeftSide = (ExpressionASTNode*) LeftSide->Check(state);
+        RightSide = (ExpressionASTNode*) RightSide->Check(state);
         // TODO: make sure left/right types are the same
         this->Type = LeftSide->Type;
         return this;
@@ -123,7 +131,7 @@ namespace Cminus { namespace Structures
         {
             auto member = Arguments[i];
             member->Symbols = this->Symbols;
-            member->Check(state);
+            Arguments[i] = (ExpressionASTNode*) member->Check(state);
             if(nullptr != data && member->Type != data->Arguments[i].TypeID)
                 throw std::string("Nonmatching types on argument ").append(to_string(i)); // TODO: better message
         }
@@ -136,8 +144,8 @@ namespace Cminus { namespace Structures
         this->Type = data->Type;
         if(nullptr != this->ArrayIndex)
         {
-            this->ArrayIndex->Symbols = this->Symbols;
-            this->ArrayIndex->Check(state);
+            ArrayIndex->Symbols = this->Symbols;
+            ArrayIndex = (ExpressionASTNode*) ArrayIndex->Check(state);
         }
         return this;
     }
@@ -147,7 +155,7 @@ namespace Cminus { namespace Structures
         if(nullptr != Value)
         {
             Value->Symbols = this->Symbols;
-            Value->Check(state);
+            Value = (ExpressionASTNode*) Value->Check(state);
         }
         return this;
     }
@@ -156,10 +164,10 @@ namespace Cminus { namespace Structures
     {
         Test->Symbols = this->Symbols;
         Body->Symbols = this->Symbols;
-        Test->Check(state);
+        Test = (ExpressionASTNode*) Test->Check(state);
         state.BreakLabels.push_back(0);
         state.ContinueLabels.push_back(0);
-        Body->Check(state);
+        Body = (ExpressionASTNode*) Body->Check(state);
         state.BreakLabels.pop_back();
         state.ContinueLabels.pop_back();
         return this;
@@ -170,19 +178,22 @@ namespace Cminus { namespace Structures
         if(nullptr != Initial)
         {
             Initial->Symbols = this->Symbols;
-            Initial->Check(state);
+            Initial = (ExpressionASTNode*) Initial->Check(state);
         }
         if(nullptr != Step)
         {
             Step->Symbols = this->Symbols;
-            Step->Check(state);
+            Step = (ExpressionASTNode*) Step->Check(state);
         }
-        Test->Symbols = this->Symbols;
-        Test->Check(state);
+        if(nullptr != Test)
+        {
+            Test->Symbols = this->Symbols;
+            Test = (ExpressionASTNode*) Test->Check(state);
+        }
         state.BreakLabels.push_back(0);
         state.ContinueLabels.push_back(0);
         Body->Symbols = this->Symbols;
-        Body->Check(state);
+        Body = Body->Check(state);
         state.BreakLabels.pop_back();
         state.ContinueLabels.pop_back();
         return this;
@@ -206,12 +217,12 @@ namespace Cminus { namespace Structures
     {
         Test->Symbols = this->Symbols;
         IfTrue->Symbols = this->Symbols;
-        Test->Check(state);
-        IfTrue->Check(state);
+        Test = (ExpressionASTNode*) Test->Check(state);
+        IfTrue = IfTrue->Check(state);
         if(nullptr != IfFalse)
         {
             IfFalse->Symbols = this->Symbols;
-            IfFalse->Check(state);
+            IfFalse = IfFalse->Check(state);
         }
         return this;
     }
@@ -219,14 +230,14 @@ namespace Cminus { namespace Structures
     ASTNode* ReadCallASTNode::Check(DriverState& state)
     {
         Variable->Symbols = this->Symbols;
-        Variable->Check(state);
+        Variable = (ExpressionASTNode*) Variable->Check(state);
         return this;
     }
 
     ASTNode* WriteCallASTNode::Check(DriverState& state)
     {
         Value->Symbols = this->Symbols;
-        Value->Check(state);
+        Value = (ExpressionASTNode*) Value->Check(state);
         return this;
     }
 

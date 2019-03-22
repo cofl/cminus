@@ -8,5 +8,15 @@
         "cmakeSettings": {
             "cmakePath": "C:/Windows/System32/bash.exe -c /usr/bin/cmake"
         }
+    },
+    {
+        "name": "Linux GCC 7",
+        "compilers": {
+            "CC" : "/opt/rh/devtoolset-7/root/usr/bin/gcc",
+            "CXX" : "/opt/rh/devtoolset-7/root/usr/bin/++"
+        },
+        "cmakeSettings": {
+            "cmakePath": "/opt/rh/devtoolset-7/root/usr/bin/cmake"
+        }
     }
 ]

@@ -258,8 +258,10 @@ IfStatement         : IF "(" Expr[Test] ")" Statement[IfTrueBody] %prec NO_ELSE
 WhileStatement      : WHILE "(" Expr[Test] ")" Statement[Body] { $$ = new WhileStatementASTNode($Test, $Body); }
                     ;
 
-ForStatement        : FOR "(" OptionalExpr[Initial] ";" Expr[Test] ";" OptionalExpr[Final] ")" Statement[Body]
-                        { $$ = new ForStatementASTNode($Initial, $Test, $Final, $Body); }
+ForStatement        : FOR "(" OptionalExpr[Initial] ";" OptionalExpr[Test] ";" OptionalExpr[Final] ")" Statement[Body]
+                    {
+                        $$ = new ForStatementASTNode($Initial, $Test, $Final, $Body);
+                    }
                     ;
 
 IOStatement         : READ "(" Variable ")" ";"         { $$ = new ReadCallASTNode($3);  }
