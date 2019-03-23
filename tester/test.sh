@@ -1,6 +1,7 @@
-ROOT=$(realpath "$(dirname ${BASH_SOURCE[0]})/..")
-MTEST="$ROOT/test/test"
-CTEST="$ROOT/test/real"
+TESTDIR=$(realpath $(dirname ${BASH_SOURCE[0]}))
+ROOT=$(realpath "$TESTDIR/..")
+MTEST="$TESTDIR/test"
+CTEST="$TESTDIR/real"
 CMC="$ROOT/cmc"
 cd $ROOT
 make -s cmc
@@ -13,8 +14,8 @@ do
     rm -f $MTEST $CTEST
     echo "Testing file $f"
     $CMC $f -o - | gcc -x assembler - -o $MTEST
-    cat "$ROOT/test/test.cpp" $f | gcc -x c++ - -o $CTEST
-    INPUTDATA="$ROOT/test/$(basename $f)"
+    cat "$TESTDIR/test.cpp" $f | gcc -x c++ - -o $CTEST
+    INPUTDATA="$TESTDIR/$(basename $f)"
     if [ -f $INPUTDATA ]
     then
         DIFF=$(diff <(cat $INPUTDATA | $MTEST) <(cat $INPUTDATA | $CTEST))
