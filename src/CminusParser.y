@@ -6,9 +6,10 @@
         class Scanner;
     }
 #include <iostream>
-#include "structures/ASTNode.hpp"
+#include "ast/AST.hpp"
 
 using namespace Cminus::Structures;
+using namespace Cminus::AST;
 }
 
 %{

@@ -8,7 +8,7 @@
     #include <vector>
     #include "DriverState.hpp"
     #include "CminusParser.hpp"
-    #include "structures/ASTNode.hpp"
+    #include "ast/StatementListASTNode.hpp"
     #include "structures/SymbolTable.hpp"
 
     /* Definitions */

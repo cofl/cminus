@@ -9,6 +9,7 @@
 #include "CminusScanner.hpp"
 
 using namespace std;
+using namespace Cminus::AST;
 
 namespace Cminus {
     Driver::Driver()

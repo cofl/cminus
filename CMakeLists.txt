@@ -24,14 +24,14 @@ BISON_TARGET(CminusParser src/CminusParser.y ${CMAKE_CURRENT_BINARY_DIR}/CminusP
 FLEX_TARGET(CminusScanner src/CminusScanner.l ${CMAKE_CURRENT_BINARY_DIR}/CminusScanner.cpp)
 ADD_FLEX_BISON_DEPENDENCY(CminusScanner CminusParser)
 
+FILE(GLOB AST_SOURCES src/ast/*.cpp)
+
 include_directories(${CMAKE_SOURCE_DIR}/src ${CMAKE_CURRENT_BINARY_DIR} /usr/include)
 
 add_definitions(-D_GLIBCXX_USE_CXX11_ABI=0)
 add_executable(${TARGET}
     "src/main.cpp"
     "src/CminusDriver.cpp"
-    "src/structures/ASTNode_constructors.cpp"
-    "src/structures/ASTNode_Emit.cpp"
-    "src/structures/ASTNode_Check.cpp"
     "src/structures/SymbolTable.cpp"
+    ${AST_SOURCES}
     ${BISON_CminusParser_OUTPUTS} ${FLEX_CminusScanner_OUTPUTS})
