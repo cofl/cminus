@@ -9,6 +9,7 @@
 #include "ForStatementASTNode.hpp"
 #include "FunctionCallASTNode.hpp"
 #include "FunctionDeclarationASTNode.hpp"
+#include "GlobalStatementListASTNode.hpp"
 #include "IfStatementASTNode.hpp"
 #include "IOStatement.hpp"
 #include "LiteralASTNode.hpp"

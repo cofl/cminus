@@ -8,7 +8,7 @@
     #include <vector>
     #include "DriverState.hpp"
     #include "CminusParser.hpp"
-    #include "ast/StatementListASTNode.hpp"
+    #include "ast/GlobalStatementListASTNode.hpp"
     #include "structures/SymbolTable.hpp"
 
     /* Definitions */
@@ -33,7 +33,7 @@ namespace Cminus
             std::vector<std::string> Types;
             int GetTypeID(std::string&& typeName);
 
-            StatementListASTNode* Root;
+            GlobalStatementListASTNode* Root;
             SymbolTable GlobalSymbolTable;
             void Process(std::ostream& outputStream);
         private:

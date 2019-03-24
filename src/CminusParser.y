@@ -129,7 +129,7 @@ Cminus::parser::symbol_type yylex(Cminus::Driver& driverInstance);
 %type <SingleVariableDeclarationASTNode*> VarDecl
 %type <VariableDeclarationASTNode*> VariableDecl IdentifierList
 %type <FunctionDeclarationASTNode*> ProcedureDecl
-%type <StatementListASTNode*> DeclList Procedures
+%type <GlobalStatementListASTNode*> DeclList Procedures
 %type <SimpleDeclarationASTNode*> FuncArg
 %type <vector<SimpleDeclarationASTNode*>*> FuncArguments
 
@@ -154,7 +154,7 @@ Program             : Procedures
 
 Procedures          : ProcedureDecl
                     {
-                        $$ = new StatementListASTNode();
+                        $$ = new GlobalStatementListASTNode();
                         $$->Members.push_back($1);
                     }
                     | Procedures ProcedureDecl
@@ -186,7 +186,7 @@ FuncArg             : Type IDENTIFIER           { $$ = new SimpleDeclarationASTN
 
 DeclList            : VariableDecl
                     {
-                        $$ = new StatementListASTNode();
+                        $$ = new GlobalStatementListASTNode();
                         $$->Members.push_back($1);
                     }
                     | DeclList VariableDecl

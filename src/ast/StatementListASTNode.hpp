@@ -11,7 +11,6 @@ namespace Cminus { namespace AST
     {
         public:
             StatementListASTNode();
-            bool IsGlobal;
             std::vector<ASTNode*> Members;
 
             void Emit(DriverState& state);
