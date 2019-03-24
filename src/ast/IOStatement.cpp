@@ -41,7 +41,7 @@ namespace Cminus { namespace AST
         state.OutputStream << "\tlea rdi, .int_rformat[rip]" << endl
                            << "\tmov eax, 0"                 << endl
                            << "\tcall scanf@PLT"             << endl;
-        state.FreeRegisters[rsii] = true; // manually free register
+        state.ReleaseRegister(rsii);
     }
 
     void WriteCallASTNode::Emit(DriverState& state)
@@ -53,17 +53,17 @@ namespace Cminus { namespace AST
             state.FreeRegisters[rdii] = false; // manually reserve register
             Value->Emit(state, "rdi");
             state.OutputStream << "\tcall puts@PLT" << endl; // mildly more efficient than printf
-            state.FreeRegisters[rdii] = true; // manually free register
+            state.ReleaseRegister(rdii);
         } else
         {
             // emit value generation, then value write
-            auto esii = state.GetRegisterID("edi");
+            auto esii = state.GetRegisterID("esi");
             state.FreeRegisters[esii] = false; // manually reserve register
             Value->Emit(state, "esi");
             state.OutputStream << "\tlea rdi, .int_wformat[rip]" << endl
                                << "\tmov eax, 0"                 << endl
                                << "\tcall printf@PLT"            << endl;
-            state.FreeRegisters[esii] = true; // manually free register
+            state.ReleaseRegister(esii);
         }
     }
 }}
