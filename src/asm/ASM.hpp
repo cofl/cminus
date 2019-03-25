@@ -3,7 +3,9 @@
 
 #include "../state/State.hpp"
 #include "../ast/ASTNode.hpp"
+#include "../ast/VariableASTNode.hpp"
 #include "Register.hpp"
+#include "Source.hpp"
 #include <string>
 
 namespace Cminus { namespace ASM
@@ -27,10 +29,16 @@ namespace Cminus { namespace ASM
 
     void Call(State& state, const string& label);
 
+    void Variable(State& state, VariableASTNode* variable);
+    void Variable(ostream& stream, VariableASTNode* variable);
     void EncodeString(State& state, string& value);
 
     void Verbatim(State& state, string& line);
+    void Verbatim(ostream& out, string& line);
     void Verbatim(State& state, const string& line);
+    void Verbatim(ostream& out, const string& line);
+    void Verbatim(ostream& out, int constant);
+    void Verbatim(ostream& out, Register& reg);
     void VerbatimLine(State& state, string& line);
     void VerbatimLine(State& state, const string& line);
     void EndLine(State& state);
@@ -45,10 +53,13 @@ namespace Cminus { namespace ASM
     void Move(State& state, Register& dest, Register& src);
     void Move(State& state, Register& dest, int value);
     void Operation(State& state, const string& operation, Register& dest);
-    void Operation(State& state, const string& operation, Register& dest, Register& src);
+    void Operation(State& state, const string& operation, Register& dest, Register& src); //deprecated
+    void Operation(State& state, const string& operation, Register& dest, Source& src);
     void CmpAndSet(State& state, const string& setOperation, Register& dest);
-    void CmpAndSet(State& state, const string& setOperation, Register& dest, Register& src);
-    void TestAndSet(State& state, const string& setOperation, Register& dest, Register& src);
+    void CmpAndSet(State& state, const string& setOperation, Register& dest, Register& src); // deprecated
+    void CmpAndSet(State& state, const string& setOperation, Register& dest, Source& src);
+    void TestAndSet(State& state, const string& setOperation, Register& dest, Register& src); // deprecated
+    void TestAndSet(State& state, const string& setOperation, Register& dest, Source& src);
 
     void IncreaseStack(State& state, int size);
     void DecreaseStack(State& state, int size);

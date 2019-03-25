@@ -21,16 +21,15 @@ namespace Cminus { namespace ASM
     {
         public:
             Source(State& state, ExpressionASTNode* expression);
+            ~Source();
 
-            friend ostream& operator<<(ostream& out, Source&& src);
+            friend ostream& operator<<(ostream& out, Source& src);
 
         private:
+            State& _State;
+            ExpressionASTNode* Member;
             SourceType Type;
-            union {
-                Register _register;
-                int _literal;
-                string _location;
-            } Value;
+            Register _Register;
         // TODO
     };
 }}

@@ -57,6 +57,25 @@ namespace Cminus { namespace ASM
         state.OutputStream << "\tcall " << label << endl;
     }
 
+    void Variable(State& state, VariableASTNode* variable)
+    {
+        Variable(state.OutputStream, variable);
+    }
+
+    void Variable(ostream& stream, VariableASTNode* variable)
+    {
+        if(nullptr != variable->ArrayIndex)
+            throw "ASM::Variable only supports variables without array indices.";
+        auto data = variable->Symbols->FindVariable(variable->ID);
+        if(data->IsGlobal)
+        {
+            stream << data->GlobalLocation << "[rip]";
+        } else
+        {
+            stream << data->StackOffset << "[rbp]";
+        }
+    }
+
     void EncodeString(State& state, string& value)
     {
         state.OutputStream << '"';
@@ -96,9 +115,29 @@ namespace Cminus { namespace ASM
         state.OutputStream << line;
     }
 
+    void Verbatim(ostream& out, string& line)
+    {
+        out << line;
+    }
+
     void Verbatim(State& state, const string& line)
     {
         state.OutputStream << line;
+    }
+
+    void Verbatim(ostream& out, const string& line)
+    {
+        out << line;
+    }
+
+    void Verbatim(ostream& out, int constant)
+    {
+        out << constant;
+    }
+
+    void Verbatim(ostream& out, Register& reg)
+    {
+        out << reg;
     }
 
     void VerbatimLine(State& state, string& line)
@@ -171,6 +210,11 @@ namespace Cminus { namespace ASM
         state.OutputStream << "\t" << operation << ' ' << dest << ", " << src << endl;
     }
 
+    void Operation(State& state, const string& operation, Register& dest, Source& src)
+    {
+        state.OutputStream << "\t" << operation << ' ' << dest << ", " << src << endl;
+    }
+
     void CmpAndSet(State& state, const string& setOperation, Register& dest)
     {
         auto byteName = dest.Name(RegisterLength::_8);
@@ -187,7 +231,23 @@ namespace Cminus { namespace ASM
                            << "\tmovzx " << dest << ", "  << byteName << endl;
     }
 
+    void CmpAndSet(State& state, const string& setOperation, Register& dest, Source& src)
+    {
+        auto byteName = dest.Name(RegisterLength::_8);
+        state.OutputStream << "\tcmp " << dest << ", " << src         << endl
+                           << "\t" << setOperation << ' ' << byteName << endl
+                           << "\tmovzx " << dest << ", "  << byteName << endl;
+    }
+
     void TestAndSet(State& state, const string& setOperation, Register& dest, Register& src)
+    {
+        auto byteName = dest.Name(RegisterLength::_8);
+        state.OutputStream << "\ttest " << dest << ", " << src        << endl
+                           << "\t" << setOperation << ' ' << byteName << endl
+                           << "\tmovzx " << dest << ", "  << byteName << endl;
+    }
+
+    void TestAndSet(State& state, const string& setOperation, Register& dest, Source& src)
     {
         auto byteName = dest.Name(RegisterLength::_8);
         state.OutputStream << "\ttest " << dest << ", " << src        << endl

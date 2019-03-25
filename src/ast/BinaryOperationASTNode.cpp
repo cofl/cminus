@@ -103,36 +103,34 @@ namespace Cminus { namespace AST
 
         LeftSide->Emit(state, destination);
 
-        auto rsr = state.AllocRegister(RegisterLength::_32);
-        RightSide->Emit(state, rsr);
         Source source(state, RightSide);
         switch(Operation)
         {
             case ASTOperationType::Exponentiation:
                 state.OutputStream << " ** "; // TODO
                 break;
-            case ASTOperationType::Multiply:    ASM::Operation(state, "imul", destination, rsr); break;
-            case ASTOperationType::Add:         ASM::Operation(state, "add", destination, rsr); break;
-            case ASTOperationType::Subtract:    ASM::Operation(state, "sub", destination, rsr); break;
-            case ASTOperationType::RightShift:  ASM::Operation(state, "shr", destination, rsr); break;
-            case ASTOperationType::LeftShift:   ASM::Operation(state, "shl", destination, rsr); break;
-            case ASTOperationType::BinaryXor:   ASM::Operation(state, "xor", destination, rsr); break;
-            case ASTOperationType::BinaryOr:    ASM::Operation(state, "or", destination, rsr); break;
-            case ASTOperationType::BinaryAnd:   ASM::Operation(state, "and", destination, rsr); break;
+            case ASTOperationType::Multiply:    ASM::Operation(state, "imul", destination, source); break;
+            case ASTOperationType::Add:         ASM::Operation(state, "add", destination, source); break;
+            case ASTOperationType::Subtract:    ASM::Operation(state, "sub", destination, source); break;
+            case ASTOperationType::RightShift:  ASM::Operation(state, "shr", destination, source); break;
+            case ASTOperationType::LeftShift:   ASM::Operation(state, "shl", destination, source); break;
+            case ASTOperationType::BinaryXor:   ASM::Operation(state, "xor", destination, source); break;
+            case ASTOperationType::BinaryOr:    ASM::Operation(state, "or", destination, source); break;
+            case ASTOperationType::BinaryAnd:   ASM::Operation(state, "and", destination, source); break;
             case ASTOperationType::LogicalOr:
-                ASM::Operation(state, "or", destination, rsr);
+                ASM::Operation(state, "or", destination, source);
                 ASM::CmpAndSet(state, "setnz", destination);
                 break;
-            case ASTOperationType::LogicalAnd:  ASM::TestAndSet(state, "setnz", destination, rsr); break;
-            case ASTOperationType::TestGT:      ASM::CmpAndSet(state, "setg", destination, rsr); break;
-            case ASTOperationType::TestGE:      ASM::CmpAndSet(state, "setge", destination, rsr); break;
-            case ASTOperationType::TestLT:      ASM::CmpAndSet(state, "setl", destination, rsr); break;
-            case ASTOperationType::TestLE:      ASM::CmpAndSet(state, "setle", destination, rsr); break;
-            case ASTOperationType::TestNE:      ASM::CmpAndSet(state, "setnz", destination, rsr); break;
-            case ASTOperationType::TestEQ:      ASM::CmpAndSet(state, "setz", destination, rsr); break;
+            case ASTOperationType::LogicalAnd:  ASM::TestAndSet(state, "setnz", destination, source); break;
+            case ASTOperationType::TestGT:      ASM::CmpAndSet(state, "setg", destination, source); break;
+            case ASTOperationType::TestGE:      ASM::CmpAndSet(state, "setge", destination, source); break;
+            case ASTOperationType::TestLT:      ASM::CmpAndSet(state, "setl", destination, source); break;
+            case ASTOperationType::TestLE:      ASM::CmpAndSet(state, "setle", destination, source); break;
+            case ASTOperationType::TestNE:      ASM::CmpAndSet(state, "setnz", destination, source); break;
+            case ASTOperationType::TestEQ:      ASM::CmpAndSet(state, "setz", destination, source); break;
             default:
                 state.OutputStream << "{{unrecognized binary operation}}" << endl;
         }
-        state.FreeRegister(rsr);
+        source.~Source();
     }
 }}
