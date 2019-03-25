@@ -90,7 +90,6 @@ namespace Cminus
                 Register(RegisterIndex::R15, RegisterLength::_64)
             }
     {
-        RegisterIsFree[0] = false;
         SymbolStack.push_back(globalTable);
         Types.push_back("int");
         Types.push_back("string");
@@ -180,11 +179,11 @@ namespace Cminus
         {
             auto regi = va_arg(args, RegisterIndex);
             auto reg = GetRegister(regi, RegisterLength::_64);
-            if(RegisterIsFree[(int) regi])
+            if(!RegisterIsFree[(int) regi])
             {
                 saved.push_back(regi);
                 OutputStream << "\tpush " << reg.Name() << endl;
-                RegisterIsFree[(int) regi] = false;
+                RegisterIsFree[(int) regi] = true;
             }
         }
         SavedRegisters.push_back(saved);
@@ -198,7 +197,7 @@ namespace Cminus
         {
             auto reg = GetRegister(saved[i], RegisterLength::_64);
             OutputStream << "\tpop " << reg.Name() << endl;
-            RegisterIsFree[(int) saved[i]] = true;
+            RegisterIsFree[(int) saved[i]] = false;
         }
     }
 

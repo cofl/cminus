@@ -1,6 +1,7 @@
 #include "FunctionDeclarationASTNode.hpp"
 #include "../asm/ASM.hpp"
 #include <iostream>
+#include <vector>
 
 namespace Cminus { namespace AST
 {
@@ -64,6 +65,8 @@ namespace Cminus { namespace AST
                 t += 16 - (t % 16);
                 ASM::IncreaseStack(state, t);
             }
+            vector<Register> used_registers;
+            Register reg;
             for(int i = 0; i < Arguments->size(); i += 1)
             {
                 auto arg = Arguments->at(i);
@@ -74,32 +77,52 @@ namespace Cminus { namespace AST
                     //TODO: reserve these registers
                     case 0:
                         data->StackOffset = -4;
-                        ASM::Store(state, data->StackOffset, state.GetRegister(RegisterIndex::EDI, RegisterLength::_32));
+                        if(!state.AllocRegister(RegisterIndex::EDI, RegisterLength::_32, reg))
+                            throw "Register EDI already allocated!";
+                        ASM::Store(state, data->StackOffset, reg);
+                        used_registers.push_back(reg);
                         break;
                     case 1:
                         data->StackOffset = -8;
-                        ASM::Store(state, data->StackOffset, state.GetRegister(RegisterIndex::ESI, RegisterLength::_32));
+                        if(!state.AllocRegister(RegisterIndex::ESI, RegisterLength::_32, reg))
+                            throw "Register ESI already allocated!";
+                        ASM::Store(state, data->StackOffset, reg);
+                        used_registers.push_back(reg);
                         break;
                     case 2:
                         data->StackOffset = -12;
-                        ASM::Store(state, data->StackOffset, state.GetRegister(RegisterIndex::EDX, RegisterLength::_32));
+                        if(!state.AllocRegister(RegisterIndex::EDX, RegisterLength::_32, reg))
+                            throw "Register EDX already allocated!";
+                        ASM::Store(state, data->StackOffset, reg);
+                        used_registers.push_back(reg);
                         break;
                     case 3:
                         data->StackOffset = -16;
-                        ASM::Store(state, data->StackOffset, state.GetRegister(RegisterIndex::ECX, RegisterLength::_32));
+                        if(!state.AllocRegister(RegisterIndex::ECX, RegisterLength::_32, reg))
+                            throw "Register ECX already allocated!";
+                        ASM::Store(state, data->StackOffset, reg);
+                        used_registers.push_back(reg);
                         break;
                     case 4:
                         data->StackOffset = -20;
-                        ASM::Store(state, data->StackOffset, state.GetRegister(RegisterIndex::R8D, RegisterLength::_32));
+                        if(!state.AllocRegister(RegisterIndex::R8D, RegisterLength::_32, reg))
+                            throw "Register R8D already allocated!";
+                        ASM::Store(state, data->StackOffset, reg);
+                        used_registers.push_back(reg);
                         break;
                     case 5:
                         data->StackOffset = -24;
-                        ASM::Store(state, data->StackOffset, state.GetRegister(RegisterIndex::R9D, RegisterLength::_32));
+                        if(!state.AllocRegister(RegisterIndex::R9D, RegisterLength::_32, reg))
+                            throw "Register R9D already allocated!";
+                        ASM::Store(state, data->StackOffset, reg);
+                        used_registers.push_back(reg);
                         break;
                     default:
                         data->StackOffset = 8 + i * 4;
                 }
             }
+            for(auto&& r: used_registers)
+                state.FreeRegister(r);
         }
         Body->Emit(state);
         ASM::FunctionFooter(state, ID);

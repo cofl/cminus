@@ -49,6 +49,8 @@ namespace Cminus { namespace AST
                 auto edxs = state.RegisterStatus(edx);
                 state.SetRegisterStatus(edx, false);
 
+                bool allocatedEAX = false;
+
                 if(destination.Index == RegisterIndex::EAX)
                 {
                     LeftSide->Emit(state, destination);
@@ -56,10 +58,18 @@ namespace Cminus { namespace AST
                 } else if(destination.Index == RegisterIndex::EDX)
                 {
                     state.SaveRegisters(1, RegisterIndex::RAX);
+                    if(!state.AllocRegister(RegisterIndex::EAX, RegisterLength::_32, eax))
+                        throw "Register EAX already allocated!";
+                    else
+                        allocatedEAX = true;
                     LeftSide->Emit(state, eax);
                 } else
                 {
                     state.SaveRegisters(2, RegisterIndex::RAX, RegisterIndex::RDX);
+                    if(!state.AllocRegister(RegisterIndex::EAX, RegisterLength::_32, eax))
+                        throw "Register EAX already allocated!";
+                    else
+                        allocatedEAX = true;
                     LeftSide->Emit(state, eax);
                 }
 
@@ -79,6 +89,8 @@ namespace Cminus { namespace AST
                 }
 
                 // cleanup, restore edx state
+                if(allocatedEAX)
+                    state.FreeRegister(eax);
                 state.FreeRegister(rsr);
                 state.RestoreRegisters();
                 state.SetRegisterStatus(edx, edxs);

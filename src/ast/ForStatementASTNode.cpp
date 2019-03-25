@@ -54,9 +54,12 @@ namespace Cminus { namespace AST
             Initial->Emit(state);
         if(nullptr != Test)
         {
-            auto eax = state.GetRegister(RegisterIndex::EAX, RegisterLength::_32);
+            Register eax;
+            if(!state.AllocRegister(RegisterIndex::EAX, RegisterLength::_32, eax))
+                throw "Register EAX already allocated!";
             Test->Emit(state, eax);
             ASM::CmpAndJump(state, "je", afterLabel, 'f', eax);
+            state.FreeRegister(eax);
         }
         ASM::Label(state, beginLabel);
 
@@ -66,9 +69,12 @@ namespace Cminus { namespace AST
             Step->Emit(state);
         if(nullptr != Test)
         {
-            auto eax = state.GetRegister(RegisterIndex::EAX, RegisterLength::_32);
+            Register eax;
+            if(!state.AllocRegister(RegisterIndex::EAX, RegisterLength::_32, eax))
+                throw "Register EAX already allocated!";
             Test->Emit(state, eax);
             ASM::CmpAndJump(state, "jnz", beginLabel, 'b', eax);
+            state.FreeRegister(eax);
         } else
         {
             ASM::JumpBackward(state, beginLabel);

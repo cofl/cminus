@@ -44,13 +44,16 @@ namespace Cminus { namespace AST
             if(nullptr != ArrayIndex)
             {
                 state.SaveRegisters(1, RegisterIndex::RAX);
-                auto eax = state.GetRegister(RegisterIndex::EAX, RegisterLength::_32);
+                Register eax;
+                if(!state.AllocRegister(RegisterIndex::EAX, RegisterLength::_32, eax))
+                    throw "Register EAX already allocated!";
                 ArrayIndex->Emit(state, eax);
                 auto reg = state.AllocRegister(RegisterLength::_64);
                 state.OutputStream << "\tcdqe" << endl
                                    << "\tlea " << reg.Name() << ", 0[0+rax*4]"                         << endl
                                    << "\tlea rax, " << data->GlobalLocation << "[rip]"                 << endl
                                    << "\tmov " << destination.Name() << ", [rax+" << reg.Name() << ']' << endl;
+                state.FreeRegister(eax);
                 state.FreeRegister(reg);
                 state.RestoreRegisters();
             } else
@@ -60,13 +63,16 @@ namespace Cminus { namespace AST
         } else if (nullptr != ArrayIndex)
         {
             state.SaveRegisters(1, RegisterIndex::EAX);
-            auto eax = state.GetRegister(RegisterIndex::EAX, RegisterLength::_32);
+            Register eax;
+            if(!state.AllocRegister(RegisterIndex::EAX, RegisterLength::_32, eax))
+                throw "Register EAX already allocated!";
             ArrayIndex->Emit(state, eax);
             auto reg = state.AllocRegister(RegisterLength::_64);
             state.OutputStream << "\tcdqe" << endl
                                << "\tlea " << reg.Name() << ", 0[0+rax*4]"                         << endl
                                << "\tlea rax, " << data->StackOffset << "[rbp]"                    << endl
                                << "\tmov " << destination.Name() << ", [rax+" << reg.Name() << ']' << endl;
+            state.FreeRegister(eax);
             state.FreeRegister(reg);
             state.RestoreRegisters();
         } else
@@ -82,38 +88,38 @@ namespace Cminus { namespace AST
         {
             if(nullptr != ArrayIndex)
             {
-                auto savedAx = destination.Index != RegisterIndex::RAX;
-                if (savedAx)
-                    state.OutputStream << "\tpush rax" << endl;
-                auto eax = state.GetRegister(RegisterIndex::EAX, RegisterLength::_32);
+                state.SaveRegisters(1, RegisterIndex::RAX);
+                Register eax;
+                if(!state.AllocRegister(RegisterIndex::EAX, RegisterLength::_32, eax))
+                    throw "Register EAX already allocated!";
                 ArrayIndex->Emit(state, eax);
                 auto reg = state.AllocRegister(RegisterLength::_64);
                 state.OutputStream << "\tcdqe" << endl
                                    << "\tlea " << reg.Name() << ", 0[0+rax*4]"                         << endl
                                    << "\tlea rax, " << data->GlobalLocation << "[rip]"                 << endl
                                    << "\tlea " << destination.Name() << ", [rax+" << reg.Name() << ']' << endl;
+                state.FreeRegister(eax);
                 state.FreeRegister(reg);
-                if (savedAx)
-                    state.OutputStream << "\tpop rax" << endl;
+                state.RestoreRegisters();
             } else
             {
                 state.OutputStream << "\tlea " << destination.Name() << ", " << data->GlobalLocation << "[rip]" << endl;
             }
         } else if (nullptr != ArrayIndex)
         {
-            auto savedAx = destination.Index != RegisterIndex::RAX;
-            if (savedAx)
-                state.OutputStream << "\tpush rax" << endl;
-            auto eax = state.GetRegister(RegisterIndex::EAX, RegisterLength::_32);
+            state.SaveRegisters(1, RegisterIndex::RAX);
+            Register eax;
+            if(!state.AllocRegister(RegisterIndex::EAX, RegisterLength::_32, eax))
+                throw "Register EAX already allocated!";
             ArrayIndex->Emit(state, eax);
             auto reg = state.AllocRegister(RegisterLength::_64);
             state.OutputStream << "\tcdqe" << endl
                                << "\tlea " << reg.Name() << ", 0[0+rax*4]"                         << endl
                                << "\tlea rax, " << data->StackOffset << "[rbp]"                    << endl
                                << "\tlea " << destination.Name() << ", [rax+" << reg.Name() << ']' << endl;
+            state.FreeRegister(eax);
             state.FreeRegister(reg);
-            if (savedAx)
-                state.OutputStream << "\tpop rax" << endl;
+            state.RestoreRegisters();
         } else
         {
             state.OutputStream << "\tlea " << destination.Name() << ", " << data->StackOffset << "[rbp]" << endl;

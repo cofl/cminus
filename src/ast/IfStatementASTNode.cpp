@@ -42,8 +42,11 @@ namespace Cminus { namespace AST
     {
         int elseLabel = state.NextFreeLabel;
         state.NextFreeLabel += 1;
-        auto eax = state.GetRegister(RegisterIndex::EAX, RegisterLength::_32);
+        Register eax;
+        if(!state.AllocRegister(RegisterIndex::EAX, RegisterLength::_32, eax))
+            throw "Register EAX already allocated!";
         Test->Emit(state, eax);
+        state.FreeRegister(eax);
         ASM::CmpAndJump(state, "je", elseLabel, 'f', eax);
         IfTrue->Emit(state);
         if(IfFalse != nullptr)

@@ -83,13 +83,14 @@ namespace Cminus { namespace AST
 
     void ReturnStatementASTNode::Emit(State& state)
     {
-        Register eax;
-        if(!state.AllocRegister(RegisterIndex::EAX, RegisterLength::_32, eax))
-        {
-            throw "Register EAX already in use!";
-        }
         if(nullptr != Value)
+        {
+            Register eax;
+            if(!state.AllocRegister(RegisterIndex::EAX, RegisterLength::_32, eax))
+                throw "Register EAX already allocated!";
             Value->Emit(state, eax);
+            state.FreeRegister(eax);
+        }
         ASM::Return(state);
     }
 }}

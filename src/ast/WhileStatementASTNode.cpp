@@ -39,8 +39,12 @@ namespace Cminus { namespace AST
         ASM::Label(state, beginLabel);
         Body->Emit(state);
         ASM::Label(state, testLabel);
-        Test->Emit(state, state.GetRegister(RegisterIndex::EAX, RegisterLength::_32));
-        ASM::CmpAndJump(state, "jnz", beginLabel, 'b', state.GetRegister(RegisterIndex::EAX, RegisterLength::_32));
+        Register eax;
+        if(!state.AllocRegister(RegisterIndex::EAX, RegisterLength::_32, eax))
+            throw "Register EAX already allocated!";
+        Test->Emit(state, eax);
+        ASM::CmpAndJump(state, "jnz", beginLabel, 'b', eax);
+        state.FreeRegister(eax);
         ASM::Label(state, afterLabel);
         state.NextFreeLabel -= 3;
         state.BreakLabels.pop_back();
