@@ -1,4 +1,5 @@
 #include "IOStatement.hpp"
+#include "../asm/ASM.hpp"
 #include <iostream>
 
 namespace Cminus { namespace AST
@@ -41,9 +42,9 @@ namespace Cminus { namespace AST
             throw "Register RSI already in use!";
         }
         Variable->EmitLValue(state, reg);
-        state.OutputStream << "\tlea rdi, .int_rformat[rip]" << endl
-                           << "\tmov eax, 0"                 << endl
-                           << "\tcall scanf@PLT"             << endl;
+        ASM::LoadGlobalAddress(state, state.GetRegister(RegisterIndex::RDI, RegisterLength::_64), ".int_rformat");
+        ASM::Zero(state, state.GetRegister(RegisterIndex::EAX, RegisterLength::_32));
+        ASM::Call(state, "scanf@PLT");
         state.FreeRegister(reg);
     }
 
@@ -58,7 +59,7 @@ namespace Cminus { namespace AST
                 throw "Register RDI already in use!";
             }
             Value->Emit(state, rdi);
-            state.OutputStream << "\tcall puts@PLT" << endl; // mildly more efficient than printf
+            ASM::Call(state, "puts@PLT"); // mildly more efficient than printf
             state.FreeRegister(rdi);
         } else
         {
@@ -69,9 +70,9 @@ namespace Cminus { namespace AST
                 throw "Register ESI already in use!";
             }
             Value->Emit(state, esi);
-            state.OutputStream << "\tlea rdi, .int_wformat[rip]" << endl
-                               << "\tmov eax, 0"                 << endl
-                               << "\tcall printf@PLT"            << endl;
+            ASM::LoadGlobalAddress(state, state.GetRegister(RegisterIndex::RDI, RegisterLength::_64), ".int_wformat");
+            ASM::Zero(state, state.GetRegister(RegisterIndex::EAX, RegisterLength::_32));
+            ASM::Call(state, "printf@PLT");
             state.FreeRegister(esi);
         }
     }

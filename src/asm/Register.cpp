@@ -1,11 +1,13 @@
 #include "Register.hpp"
 
+#include <iostream>
 #include <map>
 
 namespace Cminus { namespace ASM
 {
     using std::string;
     using std::map;
+    using std::ostream;
 
     static const string RegisterNames[17][5] = {
         { "al", "ax", "eax", "rax", "ah" },
@@ -64,5 +66,10 @@ namespace Cminus { namespace ASM
             case RegisterLength::_64:
                 return RegisterNames[(int)Index][3];
         }
+    }
+
+    ostream& operator<<(ostream& stream, Register& reg)
+    {
+        return stream << reg.Name();
     }
 }}

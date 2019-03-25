@@ -1,4 +1,5 @@
 #include "MiscStatement.hpp"
+#include "../asm/ASM.hpp"
 #include <iostream>
 
 namespace Cminus { namespace AST
@@ -62,12 +63,12 @@ namespace Cminus { namespace AST
 
     void BreakStatementASTNode::Emit(State& state)
     {
-        state.OutputStream << "\tjmp " << state.GetBreakLabel() << 'f' << endl;
+        ASM::JumpForward(state, state.GetBreakLabel());
     }
 
     void ContinueStatementASTNode::Emit(State& state)
     {
-        state.OutputStream << "\tjmp " << state.GetContinueLabel() << 'f' << endl;
+        ASM::JumpBackward(state, state.GetContinueLabel());
     }
 
     void ExitStatementASTNode::Emit(State& state)
@@ -77,7 +78,7 @@ namespace Cminus { namespace AST
 
     void NopStatementASTNode::Emit(State& state)
     {
-        state.OutputStream << "\tnop" << endl;
+        ASM::VerbatimLine(state, "\tnop");
     }
 
     void ReturnStatementASTNode::Emit(State& state)
@@ -89,7 +90,6 @@ namespace Cminus { namespace AST
         }
         if(nullptr != Value)
             Value->Emit(state, eax);
-        state.OutputStream << "\tleave" << endl
-                           << "\tret"   << endl;
+        ASM::Return(state);
     }
 }}

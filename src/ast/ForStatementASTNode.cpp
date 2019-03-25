@@ -1,4 +1,5 @@
 #include "ForStatementASTNode.hpp"
+#include "../asm/ASM.hpp"
 #include <iostream>
 
 namespace Cminus { namespace AST
@@ -55,30 +56,24 @@ namespace Cminus { namespace AST
         {
             auto eax = state.GetRegister(RegisterIndex::EAX, RegisterLength::_32);
             Test->Emit(state, eax);
-            state.OutputStream << "\tcmp eax, 0"               << endl
-                               << "\tje " << afterLabel << 'f' << endl
-                               << beginLabel << ':'            << endl;
-        } else
-        {
-            state.OutputStream << beginLabel << ':'            << endl;
+            ASM::CmpAndJump(state, "je", afterLabel, 'f', eax);
         }
+        ASM::Label(state, beginLabel);
 
         Body->Emit(state);
-        state.OutputStream << stepLabel << ':' << endl;
+        ASM::Label(state, stepLabel);
         if(nullptr != Step)
             Step->Emit(state);
         if(nullptr != Test)
         {
             auto eax = state.GetRegister(RegisterIndex::EAX, RegisterLength::_32);
             Test->Emit(state, eax);
-            state.OutputStream << "\tcmp eax, 0"                << endl
-                               << "\tjnz " << beginLabel << 'b' << endl
-                               << afterLabel << ':'             << endl;
+            ASM::CmpAndJump(state, "jnz", beginLabel, 'b', eax);
         } else
         {
-            state.OutputStream << "\tjmp " << beginLabel << 'b' << endl
-                               << afterLabel << ':'             << endl;
+            ASM::JumpBackward(state, beginLabel);
         }
+        ASM::Label(state, afterLabel);
 
         state.BreakLabels.pop_back();
         state.ContinueLabels.pop_back();

@@ -20,7 +20,7 @@ namespace Cminus { namespace AST
         ASM::EncodeString(state, state.FileName);
         ASM::EndLine     (state);
         ASM::VerbatimLine(state, "\t.intel_syntax noprefix");
-        ASM::VerbatimLine(state, "\t.text");
+        ASM::Section(state, SectionType::Text);
         for(auto it = Symbols->Variables.begin(); it != Symbols->Variables.end(); it++)
         {
             auto name = it->first;
@@ -34,7 +34,7 @@ namespace Cminus { namespace AST
             }
             // TODO: emit constant code
         }
-        ASM::VerbatimLine(state, "\t.section .rodata");
+        ASM::Section(state, SectionType::ROData);
         ASM::Label       (state, ".int_wformat");
         ASM::VerbatimLine(state, "\t.string \"%d\\n\"");
         ASM::Label       (state, ".int_rformat");
@@ -46,7 +46,7 @@ namespace Cminus { namespace AST
             ASM::EncodeString(state, it->second);
             ASM::EndLine (state);
         }
-        ASM::VerbatimLine(state, "\t.text");
+        ASM::Section(state, SectionType::Text);
         for(auto const& member: Members)
             member->Emit(state);
         utsname uts;
@@ -59,6 +59,6 @@ namespace Cminus { namespace AST
         ASM::EndLine (state);
 
         // GCC thinks this is a good idea, and so does the Internet
-        ASM::VerbatimLine(state, "\t.section\t.note.GNU-stack,\"\",@progbits");
+        ASM::VerbatimLine(state, "\t.section .note.GNU-stack,\"\",@progbits");
     }
 }}

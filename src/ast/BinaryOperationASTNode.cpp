@@ -1,4 +1,5 @@
 #include "BinaryOperationASTNode.hpp"
+#include "../asm/ASM.hpp"
 #include <iostream>
 
 namespace Cminus { namespace AST
@@ -27,91 +28,64 @@ namespace Cminus { namespace AST
 
     void BinaryOperationASTNode::Emit(State& state, Register& destination)
     {
-        if(Operation == ASTOperationType::Assign)
+        switch (Operation)
         {
-            //TODO: check if lvalue
-            RightSide->Emit(state, destination);
-            auto lsr = state.AllocRegister(RegisterLength::_64);
-            LeftSide->EmitLValue(state, lsr);
-            state.OutputStream << "\tmov [" << lsr.Name() << "], " << destination.Name() << endl;
-            state.FreeRegister(lsr);
-            return;
-        } else if(Operation == ASTOperationType::Divide)
-        {
-            auto eax = state.GetRegister(RegisterIndex::EAX, RegisterLength::_32);
-            auto edx = state.GetRegister(RegisterIndex::EDX, RegisterLength::_32);
-
-            // manually reserve edx if it isn't already
-            auto edxs = state.RegisterStatus(edx);
-            state.SetRegisterStatus(edx, false);
-
-            if(destination.Index == RegisterIndex::EAX)
+            case ASTOperationType::Assign:
             {
-                LeftSide->Emit(state, destination);
-                state.SaveRegisters(1, RegisterIndex::RDX);
-            } else if(destination.Index == RegisterIndex::EDX)
+                //TODO: check if lvalue
+                RightSide->Emit(state, destination);
+                auto lsr = state.AllocRegister(RegisterLength::_64);
+                LeftSide->EmitLValue(state, lsr);
+                ASM::Store(state, lsr, destination);
+                state.FreeRegister(lsr);
+            }   return;
+            case ASTOperationType::Divide:
+            case ASTOperationType::Modulo:
             {
-                state.SaveRegisters(1, RegisterIndex::RAX);
-                LeftSide->Emit(state, eax);
-            } else
-            {
-                state.SaveRegisters(2, RegisterIndex::RAX, RegisterIndex::RDX);
-                LeftSide->Emit(state, eax);
-            }
+                auto eax = state.GetRegister(RegisterIndex::EAX, RegisterLength::_32);
+                auto edx = state.GetRegister(RegisterIndex::EDX, RegisterLength::_32);
 
-            state.OutputStream << "\tmov edx, 0" << endl;
-            auto rsr = state.AllocRegister(RegisterLength::_32);
-            RightSide->Emit(state, rsr);
-            state.OutputStream << "\tidiv " << rsr.Name() << endl;
+                // manually reserve edx if it isn't already
+                auto edxs = state.RegisterStatus(edx);
+                state.SetRegisterStatus(edx, false);
 
-            if (destination.Index != RegisterIndex::EAX)
-            {
-                state.OutputStream << "\tmov " << destination.Name() << ", eax" << endl;
-            }
+                if(destination.Index == RegisterIndex::EAX)
+                {
+                    LeftSide->Emit(state, destination);
+                    state.SaveRegisters(1, RegisterIndex::RDX);
+                } else if(destination.Index == RegisterIndex::EDX)
+                {
+                    state.SaveRegisters(1, RegisterIndex::RAX);
+                    LeftSide->Emit(state, eax);
+                } else
+                {
+                    state.SaveRegisters(2, RegisterIndex::RAX, RegisterIndex::RDX);
+                    LeftSide->Emit(state, eax);
+                }
 
-            // cleanup, restore edx state
-            state.FreeRegister(rsr);
-            state.RestoreRegisters();
-            state.SetRegisterStatus(edx, edxs);
-            return;
-        } else if(Operation == ASTOperationType::Modulo)
-        {
-            auto eax = state.GetRegister(RegisterIndex::EAX, RegisterLength::_32);
-            auto edx = state.GetRegister(RegisterIndex::EDX, RegisterLength::_32);
+                ASM::Zero(state, edx);
+                auto rsr = state.AllocRegister(RegisterLength::_32);
+                RightSide->Emit(state, rsr);
+                ASM::Operation(state, "idiv", rsr);
 
-            // manually reserve edx if it isn't already
-            auto edxs = state.RegisterStatus(edx);
-            state.SetRegisterStatus(edx, false);
+                if (Operation == ASTOperationType::Divide)
+                {
+                    if (destination.Index != RegisterIndex::EAX)
+                        ASM::Move(state, destination, eax);
+                } else
+                {
+                    if (destination.Index != RegisterIndex::EDX)
+                        ASM::Move(state, destination, edx);
+                }
 
-            if(destination.Index == RegisterIndex::EAX)
-            {
-                LeftSide->Emit(state, destination);
-                state.SaveRegisters(1, RegisterIndex::RDX);
-            } else if(destination.Index == RegisterIndex::EDX)
-            {
-                state.SaveRegisters(1, RegisterIndex::RAX);
-                LeftSide->Emit(state, eax);
-            } else
-            {
-                state.SaveRegisters(2, RegisterIndex::RAX, RegisterIndex::RDX);
-                LeftSide->Emit(state, eax);
-            }
-
-            state.OutputStream << "\tmov edx, 0" << endl;
-            auto rsr = state.AllocRegister(RegisterLength::_32);
-            RightSide->Emit(state, rsr);
-            state.OutputStream << "\tidiv " << rsr.Name() << endl;
-
-            if (destination.Index != RegisterIndex::EDX)
-            {
-                state.OutputStream << "\tmov " << destination.Name() << ", edx" << endl;
-            }
-
-            // cleanup, restore edx state
-            state.FreeRegister(rsr);
-            state.RestoreRegisters();
-            state.SetRegisterStatus(edx, edxs);
-            return;
+                // cleanup, restore edx state
+                state.FreeRegister(rsr);
+                state.RestoreRegisters();
+                state.SetRegisterStatus(edx, edxs);
+            }   return;
+            default:
+                // fall through to the other cases
+                break;
         }
 
         LeftSide->Emit(state, destination);
@@ -124,73 +98,27 @@ namespace Cminus { namespace AST
             case ASTOperationType::Exponentiation:
                 state.OutputStream << " ** "; // TODO
                 break;
-            case ASTOperationType::Multiply:
-                state.OutputStream << "\timul " << destination.Name() << ", " << rsr.Name() << endl;
-                break;
-            case ASTOperationType::Add:
-                state.OutputStream << "\tadd " << destination.Name() << ", " << rsr.Name() << endl;
-                break;
-            case ASTOperationType::Subtract:
-                state.OutputStream << "\tsub " << destination.Name() << ", " << rsr.Name() << endl;
-                break;
-            case ASTOperationType::RightShift:
-                state.OutputStream << "\tshr " << destination.Name() << ", " << rsr.Name() << endl;
-                break;
-            case ASTOperationType::LeftShift:
-                state.OutputStream << "\tshl " << destination.Name() << ", " << rsr.Name() << endl;
-                break;
-            case ASTOperationType::BinaryXor:
-                state.OutputStream << "\txor " << destination.Name() << ", " << rsr.Name() << endl;
-                break;
-            case ASTOperationType::BinaryOr:
-                state.OutputStream << "\tor " << destination.Name() << ", " << rsr.Name() << endl;
-                break;
+            case ASTOperationType::Multiply:    ASM::Operation(state, "imul", destination, rsr); break;
+            case ASTOperationType::Add:         ASM::Operation(state, "add", destination, rsr); break;
+            case ASTOperationType::Subtract:    ASM::Operation(state, "sub", destination, rsr); break;
+            case ASTOperationType::RightShift:  ASM::Operation(state, "shr", destination, rsr); break;
+            case ASTOperationType::LeftShift:   ASM::Operation(state, "shl", destination, rsr); break;
+            case ASTOperationType::BinaryXor:   ASM::Operation(state, "xor", destination, rsr); break;
+            case ASTOperationType::BinaryOr:    ASM::Operation(state, "or", destination, rsr); break;
+            case ASTOperationType::BinaryAnd:   ASM::Operation(state, "and", destination, rsr); break;
             case ASTOperationType::LogicalOr:
-                state.OutputStream << "\tor "    << destination.Name() << ", " << rsr.Name() << endl
-                                   << "\tcmp "   << destination.Name() << ", 0"              << endl
-                                   << "\tsetnz " << dst8                                     << endl
-                                   << "\tmovzx " << destination.Name() << ", " << dst8       << endl;
+                ASM::Operation(state, "or", destination, rsr);
+                ASM::CmpAndSet(state, "setnz", destination);
                 break;
-            case ASTOperationType::BinaryAnd:
-                state.OutputStream << "\tand " << destination.Name() << ", " << rsr.Name()   << endl;
-                break;
-            case ASTOperationType::LogicalAnd:
-                state.OutputStream << "\ttest "  << destination.Name() << ", " << rsr.Name() << endl
-                                   << "\tsetnz " << dst8                                     << endl
-                                   << "\tmovzx " << destination.Name() << ", " << dst8       << endl;
-                break;
-            case ASTOperationType::TestGT:
-                state.OutputStream << "\tcmp "   << destination.Name() << ", " << rsr.Name() << endl
-                                   << "\tsetg "  << dst8                                     << endl
-                                   << "\tmovzx " << destination.Name() << ", " << dst8       << endl;
-                break;
-            case ASTOperationType::TestGE:
-                state.OutputStream << "\tcmp "   << destination.Name() << ", " << rsr.Name() << endl
-                                   << "\tsetge " << dst8                                     << endl
-                                   << "\tmovzx " << destination.Name() << ", " << dst8       << endl;
-                break;
-            case ASTOperationType::TestLT:
-                state.OutputStream << "\tcmp "   << destination.Name() << ", " << rsr.Name() << endl
-                                   << "\tsetl "  << dst8                                     << endl
-                                   << "\tmovzx " << destination.Name() << ", " << dst8       << endl;
-                break;
-            case ASTOperationType::TestLE:
-                state.OutputStream << "\tcmp "   << destination.Name() << ", " << rsr.Name() << endl
-                                   << "\tsetle " << dst8                                     << endl
-                                   << "\tmovzx " << destination.Name() << ", " << dst8       << endl;
-                break;
-            case ASTOperationType::TestNE:
-                state.OutputStream << "\tcmp "   << destination.Name() << ", " << rsr.Name() << endl
-                                   << "\tsetnz " << dst8                                     << endl
-                                   << "\tmovzx " << destination.Name() << ", " << dst8       << endl;
-                break;
-            case ASTOperationType::TestEQ:
-                state.OutputStream << "\tcmp "   << destination.Name() << ", " << rsr.Name() << endl
-                                   << "\tsetz "  << dst8                                     << endl
-                                   << "\tmovzx " << destination.Name() << ", " << dst8       << endl;
-                break;
+            case ASTOperationType::LogicalAnd:  ASM::TestAndSet(state, "setnz", destination, rsr); break;
+            case ASTOperationType::TestGT:      ASM::CmpAndSet(state, "setg", destination, rsr); break;
+            case ASTOperationType::TestGE:      ASM::CmpAndSet(state, "setge", destination, rsr); break;
+            case ASTOperationType::TestLT:      ASM::CmpAndSet(state, "setl", destination, rsr); break;
+            case ASTOperationType::TestLE:      ASM::CmpAndSet(state, "setle", destination, rsr); break;
+            case ASTOperationType::TestNE:      ASM::CmpAndSet(state, "setnz", destination, rsr); break;
+            case ASTOperationType::TestEQ:      ASM::CmpAndSet(state, "setz", destination, rsr); break;
             default:
-                state.OutputStream << "{{unrecognized binary operation}}";
+                state.OutputStream << "{{unrecognized binary operation}}" << endl;
         }
         state.FreeRegister(rsr);
     }

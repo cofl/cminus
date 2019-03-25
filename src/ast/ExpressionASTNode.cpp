@@ -29,15 +29,8 @@ namespace Cminus { namespace AST
         state.FreeRegister(reg);
     }
 
-    void ExpressionASTNode::Emit(State& state, Register& destination)
-    {
-        // TODO: better error handling
-        state.OutputStream << "{{Unknown expresion}}" << endl;
-    }
-
     void ExpressionASTNode::EmitLValue(State& state, Register& destination)
     {
-        // TODO: better error handling
-        state.OutputStream << "{{Unknown expresion}}" << endl;
+        throw "Illegal address access of Expression.";
     }
 }}

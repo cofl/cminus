@@ -1,4 +1,5 @@
 #include "IfStatementASTNode.hpp"
+#include "../asm/ASM.hpp"
 #include <iostream>
 
 namespace Cminus { namespace AST
@@ -43,21 +44,20 @@ namespace Cminus { namespace AST
         state.NextFreeLabel += 1;
         auto eax = state.GetRegister(RegisterIndex::EAX, RegisterLength::_32);
         Test->Emit(state, eax);
-        state.OutputStream << "\tcmp eax, 0"              << endl
-                           << "\tje " << elseLabel << 'f' << endl;
+        ASM::CmpAndJump(state, "je", elseLabel, 'f', eax);
         IfTrue->Emit(state);
         if(IfFalse != nullptr)
         {
             int afterLabel = state.NextFreeLabel;
             state.NextFreeLabel += 1;
-            state.OutputStream << "\tjmp " << afterLabel << 'f' << endl
-                               << elseLabel << ':'              << endl;
+            ASM::JumpForward(state, afterLabel);
+            ASM::Label(state, elseLabel);
             IfFalse->Emit(state);
-            state.OutputStream << afterLabel << ':' << endl;
+            ASM::Label(state, afterLabel);
             state.NextFreeLabel -= 2;
         } else
         {
-            state.OutputStream << elseLabel << ':' << endl;
+            ASM::Label(state, elseLabel);
             state.NextFreeLabel -= 1;
         }
     }

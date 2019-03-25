@@ -1,4 +1,5 @@
 #include "FunctionDeclarationASTNode.hpp"
+#include "../asm/ASM.hpp"
 #include <iostream>
 
 namespace Cminus { namespace AST
@@ -52,13 +53,7 @@ namespace Cminus { namespace AST
 
     void FunctionDeclarationASTNode::Emit(State& state)
     {
-        int prevBaseOffset = state.BaseOffset;
-        state.BaseOffset = 0;
-        state.OutputStream << "\t.global\t" << ID                << endl
-                           << "\t.type\t" << ID << ", @function" << endl
-                           << ID << ":"                          << endl
-                           << "\tpush rbp"                       << endl
-                           << "\tmov rbp, rsp"                   << endl;
+        ASM::FunctionHeader(state, ID);
         if(nullptr != Arguments)
         {
             int argc = Arguments->size();
@@ -67,8 +62,7 @@ namespace Cminus { namespace AST
                 // make space to put arguments on the stack.
                 int t = 4 * (argc > 6 ? 6 : argc);
                 t += 16 - (t % 16);
-                state.OutputStream << "\tsub rsp," << t << endl;
-                state.BaseOffset = +t;
+                ASM::IncreaseStack(state, t);
             }
             for(int i = 0; i < Arguments->size(); i += 1)
             {
@@ -77,29 +71,30 @@ namespace Cminus { namespace AST
                 data->IsGlobal = false;
                 switch(i)
                 {
+                    //TODO: reserve these registers
                     case 0:
                         data->StackOffset = -4;
-                        state.OutputStream << "\tmov -4[rbp],edi" << endl;
+                        ASM::Store(state, data->StackOffset, state.GetRegister(RegisterIndex::EDI, RegisterLength::_32));
                         break;
                     case 1:
                         data->StackOffset = -8;
-                        state.OutputStream << "\tmov -8[rbp],esi" << endl;
+                        ASM::Store(state, data->StackOffset, state.GetRegister(RegisterIndex::ESI, RegisterLength::_32));
                         break;
                     case 2:
                         data->StackOffset = -12;
-                        state.OutputStream << "\tmov -12[rbp],edx" << endl;
+                        ASM::Store(state, data->StackOffset, state.GetRegister(RegisterIndex::EDX, RegisterLength::_32));
                         break;
                     case 3:
                         data->StackOffset = -16;
-                        state.OutputStream << "\tmov -16[rbp],ecx" << endl;
+                        ASM::Store(state, data->StackOffset, state.GetRegister(RegisterIndex::ECX, RegisterLength::_32));
                         break;
                     case 4:
                         data->StackOffset = -20;
-                        state.OutputStream << "\tmov -20[rbp],r8d" << endl;
+                        ASM::Store(state, data->StackOffset, state.GetRegister(RegisterIndex::R8D, RegisterLength::_32));
                         break;
                     case 5:
                         data->StackOffset = -24;
-                        state.OutputStream << "\tmov -24[rbp],r9d" << endl;
+                        ASM::Store(state, data->StackOffset, state.GetRegister(RegisterIndex::R9D, RegisterLength::_32));
                         break;
                     default:
                         data->StackOffset = 8 + i * 4;
@@ -107,10 +102,6 @@ namespace Cminus { namespace AST
             }
         }
         Body->Emit(state);
-        state.OutputStream << "\tmov eax, 0" << endl
-                           << "\tleave"      << endl
-                           << "\tret"        << endl
-                           << "\t.size\t" << ID << ", .-" << ID << endl;
-        state.BaseOffset = prevBaseOffset;
+        ASM::FunctionFooter(state, ID);
     }
 }}

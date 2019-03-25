@@ -1,4 +1,5 @@
 #include "StatementListASTNode.hpp"
+#include "../asm/ASM.hpp"
 #include <iostream>
 #include <sys/utsname.h>
 
@@ -39,22 +40,23 @@ namespace Cminus { namespace AST
         if(!Symbols->Variables.empty())
         {
             // reserve space on the stack
-            state.OutputStream << "\tsub rsp, " << Symbols->GetAlignedSize() << endl;
+            int alignedSize = Symbols->GetAlignedSize();
+            ASM::IncreaseStack(state, alignedSize);
             int i = 1;
             for(auto it = Symbols->Variables.begin(); it != Symbols->Variables.end(); it++, i += 1)
             {
                 auto data = it->second;
                 data->IsGlobal = false;
-                data->StackOffset = i * data->ArraySize * -4 - state.BaseOffset;
+                data->StackOffset = i * data->ArraySize * -4 - state.GetStackOffset() + alignedSize;
                 if(nullptr != data->InitialValue)
                 {
                     // TODO: emit initializer code
                 }
             }
-            state.BaseOffset += Symbols->GetAlignedSize();
         }
         for(auto const& member: Members)
             member->Emit(state);
-        state.BaseOffset -= Symbols->GetAlignedSize();
+        if(!Symbols->Variables.empty())
+            ASM::DecreaseStack(state, Symbols->GetAlignedSize());
     }
 }}

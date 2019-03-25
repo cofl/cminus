@@ -69,7 +69,7 @@ namespace Cminus { namespace AST
             ASTNodeType NodeType;
             SymbolTable* Symbols;
 
-            virtual void Emit(State& state);
+            virtual void Emit(State& state) = 0;
             virtual ASTNode* Check(State& state);
     };
 }}

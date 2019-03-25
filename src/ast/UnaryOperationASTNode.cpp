@@ -1,4 +1,5 @@
 #include "UnaryOperationASTNode.hpp"
+#include "../asm/ASM.hpp"
 #include <iostream>
 
 namespace Cminus { namespace AST
@@ -28,20 +29,11 @@ namespace Cminus { namespace AST
     void UnaryOperationASTNode::Emit(State& state, Register& destination)
     {
         Member->Emit(state, destination);
-        auto dst8 = destination.Name(RegisterLength::_8);
         switch(Operation)
         {
-            case ASTOperationType::Negation:
-                state.OutputStream << "\tneg " << destination.Name() << endl;
-                break;
-            case ASTOperationType::BinaryNot:
-                state.OutputStream << "\tnot " << destination.Name() << endl;
-                break;
-            case ASTOperationType::LogicalNot:
-                state.OutputStream << "\tcmp "   << destination.Name() << ", 0"        << endl
-                                   << "\tsetz "  << dst8                               << endl
-                                   << "\tmovzx " << destination.Name() << ", " << dst8 << endl;
-                break;
+            case ASTOperationType::Negation:    ASM::Operation(state, "neg", destination); break;
+            case ASTOperationType::BinaryNot:   ASM::Operation(state, "not", destination); break;
+            case ASTOperationType::LogicalNot:  ASM::CmpAndSet(state, "setz", destination); break;
             default:
                 state.OutputStream << "{{Unrecognized Unary Operation}}";
                 break;

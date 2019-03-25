@@ -3,10 +3,12 @@
 
 #include <cstdint>
 #include <string>
+#include <iostream>
 
 namespace Cminus { namespace ASM
 {
     using std::string;
+    using std::ostream;
 
     enum class RegisterIndex : uint8_t
     {
@@ -48,6 +50,7 @@ namespace Cminus { namespace ASM
 
             const string& Name();
             const string& Name(RegisterLength otherlength);
+            friend ostream& operator<<(ostream& stream, Register& reg);
         private:
     };
 }}

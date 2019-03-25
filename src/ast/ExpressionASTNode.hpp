@@ -15,7 +15,7 @@ namespace Cminus { namespace AST
             bool IsConstant;
 
             void Emit(State& state);
-            virtual void Emit(State& state, Register& destination);
+            virtual void Emit(State& state, Register& destination) = 0;
             virtual void EmitLValue(State& state, Register& destination);
     };
 }}

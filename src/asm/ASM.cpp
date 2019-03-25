@@ -23,6 +23,19 @@ namespace Cminus { namespace ASM
         state.OutputStream << label << ':' << endl;
     }
 
+    void Section(State& state, SectionType sectionType)
+    {
+        switch (sectionType)
+        {
+            case SectionType::Text:
+                state.OutputStream << "\t.text" << endl;
+                break;
+            case SectionType::ROData:
+                state.OutputStream << "\t.section rodata" << endl;
+                break;
+        }
+    }
+
     void JumpForward(State& state, int labelID)
     {
         state.OutputStream << "\tjmp " << labelID << 'f' << endl;
@@ -33,10 +46,15 @@ namespace Cminus { namespace ASM
         state.OutputStream << "\tjmp " << labelID << 'b' << endl;
     }
 
-    void JumpBackwardIfFalse(State& state, Register& reg, int labelID)
+    void CmpAndJump(State& state, const string& jmpOperation, int labelID, char direction, Register& dest)
     {
-        state.OutputStream << "\tcmp " << reg.Name() << ", 0" << endl
-                           << "\tjnz " << labelID << 'b'      << endl;
+        state.OutputStream << "\tcmp " << dest << ", 0"                            << endl
+                           << "\t" << jmpOperation << ' ' << labelID << direction << endl;
+    }
+
+    void Call(State& state, const string& label)
+    {
+        state.OutputStream << "\tcall " << label << endl;
     }
 
     void EncodeString(State& state, string& value)
@@ -96,5 +114,121 @@ namespace Cminus { namespace ASM
     void EndLine(State& state)
     {
         state.OutputStream << endl;
+    }
+
+    void Store(State& state, int stackOffset, Register& src)
+    {
+        state.OutputStream << "\tmov " << stackOffset << "[rbp], " << src << endl;
+    }
+
+    void Store(State& state, int stackOffset, const string& base, Register& src)
+    {
+        state.OutputStream << "\tmov " << stackOffset << "[" << base << "], " << src << endl;
+    }
+
+    void Store(State& state, Register& dest, Register& src)
+    {
+        state.OutputStream << "\tmov [" << dest.Name(RegisterLength::_64) << "], " << src << endl;
+    }
+
+    void LoadGlobalAddress(State& state, Register& dest, const string& labelName)
+    {
+        state.OutputStream << "\tlea " << dest.Name(RegisterLength::_64) << ", " << labelName << "[rip]" << endl;
+    }
+
+    void Load(State& state, Register& dest, string& globalName)
+    {
+        state.OutputStream << "\tmov " << dest << ", " << globalName << "[rip]" << endl;
+    }
+
+    void Load(State& state, Register& dest, int stackOffset)
+    {
+        state.OutputStream << "\tmov " << dest << ", " << stackOffset << "[rbp]" << endl;
+    }
+
+    void Zero(State& state, Register& dest)
+    {
+        state.OutputStream << "\tmov " << dest << ", 0" << endl;
+    }
+
+    void Move(State& state, Register& dest, Register& src)
+    {
+        state.OutputStream << "\tmov " << dest << ", " << src << endl;
+    }
+
+    void Move(State& state, Register& dest, int value)
+    {
+        state.OutputStream << "\tmov " << dest << ", " << value << endl;
+    }
+
+    void Operation(State& state, const string& operation, Register& dest)
+    {
+        state.OutputStream << "\t" << operation << ' ' << dest << endl;
+    }
+
+    void Operation(State& state, const string& operation, Register& dest, Register& src)
+    {
+        state.OutputStream << "\t" << operation << ' ' << dest << ", " << src << endl;
+    }
+
+    void CmpAndSet(State& state, const string& setOperation, Register& dest)
+    {
+        auto byteName = dest.Name(RegisterLength::_8);
+        state.OutputStream << "\tcmp " << dest << ", 0"               << endl
+                           << "\t" << setOperation << ' ' << byteName << endl
+                           << "\tmovzx " << dest << ", "  << byteName << endl;
+    }
+
+    void CmpAndSet(State& state, const string& setOperation, Register& dest, Register& src)
+    {
+        auto byteName = dest.Name(RegisterLength::_8);
+        state.OutputStream << "\tcmp " << dest << ", " << src         << endl
+                           << "\t" << setOperation << ' ' << byteName << endl
+                           << "\tmovzx " << dest << ", "  << byteName << endl;
+    }
+
+    void TestAndSet(State& state, const string& setOperation, Register& dest, Register& src)
+    {
+        auto byteName = dest.Name(RegisterLength::_8);
+        state.OutputStream << "\ttest " << dest << ", " << src        << endl
+                           << "\t" << setOperation << ' ' << byteName << endl
+                           << "\tmovzx " << dest << ", "  << byteName << endl;
+    }
+
+    void IncreaseStack(State& state, int size)
+    {
+        state.GetStackOffset() += size;
+        state.OutputStream << "\tsub rsp, " << size << endl;
+    }
+
+    void DecreaseStack(State& state, int size)
+    {
+        state.GetStackOffset() -= size;
+        state.OutputStream << "\tadd rsp, " << size << endl;
+    }
+
+    void FunctionHeader(State& state, string& functionName)
+    {
+        state.StackOffset.push_back(0);
+        state.OutputStream << "\t.global\t" << functionName         << endl
+                    << "\t.type\t" << functionName << ", @function" << endl
+                    << functionName << ":"                          << endl
+                    << "\tpush rbp"                                 << endl
+                    << "\tmov rbp, rsp"                             << endl;
+    }
+
+    void FunctionFooter(State& state, string& functionName)
+    {
+        state.StackOffset.pop_back();
+        state.OutputStream << "\tmov eax, 0" << endl
+                           << "\tleave"      << endl
+                           << "\tret"        << endl
+                           << "\t.size\t" << functionName << ", .-" << functionName << endl;
+    }
+
+    void Return(State& state)
+    {
+        state.OutputStream << "\tleave" << endl
+                           << "\tret"   << endl;
     }
 }}

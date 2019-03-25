@@ -1,4 +1,5 @@
 #include "LiteralASTNode.hpp"
+#include "../asm/ASM.hpp"
 #include <iostream>
 
 namespace Cminus { namespace AST
@@ -43,11 +44,11 @@ namespace Cminus { namespace AST
 
     void IntegerLiteralASTNode::Emit(State& state, Register& destination)
     {
-        state.OutputStream << "\tmov " << destination.Name() << ", " << Value << endl;
+        ASM::Move(state, destination, Value);
     }
 
     void StringLiteralASTNode::Emit(State& state, Register& destination)
     {
-        state.OutputStream << "\tlea " << destination.Name() << ", " << Value << "[rip]" << endl;
+        ASM::LoadGlobalAddress(state, destination, Value);
     }
 }}

@@ -1,4 +1,5 @@
 #include "FunctionCallASTNode.hpp"
+#include "../asm/ASM.hpp"
 #include <iostream>
 
 namespace Cminus { namespace AST
@@ -82,19 +83,20 @@ namespace Cminus { namespace AST
         {
             int t = 4 * (argc - 6);
             t += 16 - (t % 16);
-            state.OutputStream << "\tsub rsp," << t << endl;
+            ASM::IncreaseStack(state, t);
             auto reg = state.AllocRegister(RegisterLength::_32);
             for(int i = 6, j = 0; i < argc; i += 1, j += 1)
             {
                 Arguments[i]->Emit(state, reg);
-                state.OutputStream << "\tmov " << j << "[rsp]," << reg.Name() << endl;
+                ASM::Store(state, j, "rsp", reg);
             }
             state.FreeRegister(reg);
         }
-        state.OutputStream << "\tmov eax, 0"  << endl
-                           << "\tcall " << ID << endl;
+        auto eax = state.GetRegister(RegisterIndex::EAX, RegisterLength::_32);
+        ASM::Zero(state, eax);
+        ASM::Call(state, ID);
         if(destination.Index != RegisterIndex::EAX)
-            state.OutputStream << "\tmov " << destination.Name() << ", eax" << endl;
+            ASM::Move(state, destination, eax);
         state.RestoreRegisters();
     }
 }}

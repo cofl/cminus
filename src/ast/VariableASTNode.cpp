@@ -1,4 +1,5 @@
 #include "VariableASTNode.hpp"
+#include "../asm/ASM.hpp"
 #include <iostream>
 
 namespace Cminus { namespace AST
@@ -42,9 +43,7 @@ namespace Cminus { namespace AST
         {
             if(nullptr != ArrayIndex)
             {
-                auto savedAx = destination.Index != RegisterIndex::RAX;
-                if (savedAx)
-                    state.OutputStream << "\tpush rax" << endl;
+                state.SaveRegisters(1, RegisterIndex::RAX);
                 auto eax = state.GetRegister(RegisterIndex::EAX, RegisterLength::_32);
                 ArrayIndex->Emit(state, eax);
                 auto reg = state.AllocRegister(RegisterLength::_64);
@@ -53,17 +52,14 @@ namespace Cminus { namespace AST
                                    << "\tlea rax, " << data->GlobalLocation << "[rip]"                 << endl
                                    << "\tmov " << destination.Name() << ", [rax+" << reg.Name() << ']' << endl;
                 state.FreeRegister(reg);
-                if (savedAx)
-                    state.OutputStream << "\tpop rax" << endl;
+                state.RestoreRegisters();
             } else
             {
-                state.OutputStream << "\tmov " << destination.Name() << ", " << data->GlobalLocation << "[rip]" << endl;
+                ASM::Load(state, destination, data->GlobalLocation);
             }
         } else if (nullptr != ArrayIndex)
         {
-            auto savedAx = destination.Index != RegisterIndex::RAX;
-            if (savedAx)
-                state.OutputStream << "\tpush rax" << endl;
+            state.SaveRegisters(1, RegisterIndex::EAX);
             auto eax = state.GetRegister(RegisterIndex::EAX, RegisterLength::_32);
             ArrayIndex->Emit(state, eax);
             auto reg = state.AllocRegister(RegisterLength::_64);
@@ -72,11 +68,10 @@ namespace Cminus { namespace AST
                                << "\tlea rax, " << data->StackOffset << "[rbp]"                    << endl
                                << "\tmov " << destination.Name() << ", [rax+" << reg.Name() << ']' << endl;
             state.FreeRegister(reg);
-            if (savedAx)
-                state.OutputStream << "\tpop rax" << endl;
+            state.RestoreRegisters();
         } else
         {
-            state.OutputStream << "\tmov " << destination.Name() << ", " << data->StackOffset << "[rbp]" << endl;
+            ASM::Load(state, destination, data->StackOffset);
         }
     }
 

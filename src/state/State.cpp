@@ -15,7 +15,7 @@ namespace Cminus
             LiteralID(0),
             StringLiterals(),
             NextFreeLabel(0),
-            BaseOffset(0),
+            StackOffset(),
             BreakLabels(),
             ContinueLabels(),
             SavedRegisters(),
@@ -208,7 +208,7 @@ namespace Cminus
         if(it != StringLiterals.end())
             return it->first;
 
-        auto name = ".string_constant" + LiteralID++;
+        auto name = std::string(".string_constant").append(to_string(LiteralID++));
         StringLiterals[name] = literalValue;
         return name;
     }
@@ -229,5 +229,10 @@ namespace Cminus
             if(Types[i] == typeName)
                 return i;
         throw string("Unrecognized type name \"").append(typeName).append("\".");
+    }
+
+    int& State::GetStackOffset()
+    {
+        return StackOffset.back();
     }
 }

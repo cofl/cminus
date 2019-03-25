@@ -23,7 +23,9 @@ namespace Cminus
             ostream& OutputStream;
             vector<Structures::SymbolTable*> SymbolStack;
 
-            int BaseOffset;
+            vector<int> StackOffset;
+            int& GetStackOffset();
+
             int GetTypeID(string&& name);
             vector<string> Types;
 

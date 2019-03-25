@@ -40,8 +40,7 @@ namespace Cminus { namespace AST
         Body->Emit(state);
         ASM::Label(state, testLabel);
         Test->Emit(state, state.GetRegister(RegisterIndex::EAX, RegisterLength::_32));
-        state.OutputStream << "\tcmp eax, 0" << endl
-                           << "\tjnz " << beginLabel << 'b' << endl;
+        ASM::CmpAndJump(state, "jnz", beginLabel, 'b', state.GetRegister(RegisterIndex::EAX, RegisterLength::_32));
         ASM::Label(state, afterLabel);
         state.NextFreeLabel -= 3;
         state.BreakLabels.pop_back();
