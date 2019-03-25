@@ -48,35 +48,56 @@ namespace Cminus { namespace AST
     {
         state.SaveRegisters(6, RegisterIndex::RDI, RegisterIndex::RSI, RegisterIndex::RDX,
             RegisterIndex::RCX, RegisterIndex::R9, RegisterIndex::R9);
+        if (destination.Index != RegisterIndex::EAX)
+            state.SaveRegisters(1, RegisterIndex::EAX);
         int argc = Arguments.size();
+        vector<Register> used_registers;
         if(argc > 0)
         {
-            auto edi = state.GetRegister(RegisterIndex::EDI, RegisterLength::_32);
+            Register edi;
+            if(!state.AllocRegister(RegisterIndex::EDI, RegisterLength::_32, edi))
+                throw "Register EDI already allocated!";
+            used_registers.push_back(edi);
             Arguments[0]->Emit(state, edi);
         }
         if (argc > 1)
         {
-            auto esi = state.GetRegister(RegisterIndex::ESI, RegisterLength::_32);
+            Register esi;
+            if(!state.AllocRegister(RegisterIndex::ESI, RegisterLength::_32, esi))
+                throw "Register ESI already allocated!";
+            used_registers.push_back(esi);
             Arguments[1]->Emit(state, esi);
         }
         if (argc > 2)
         {
-            auto edx = state.GetRegister(RegisterIndex::EDX, RegisterLength::_32);
+            Register edx;
+            if(!state.AllocRegister(RegisterIndex::EDX, RegisterLength::_32, edx))
+                throw "Register EDX already allocated!";
+            used_registers.push_back(edx);
             Arguments[2]->Emit(state, edx);
         }
         if (argc > 3)
         {
-            auto ecx = state.GetRegister(RegisterIndex::ECX, RegisterLength::_32);
+            Register ecx;
+            if(!state.AllocRegister(RegisterIndex::ECX, RegisterLength::_32, ecx))
+                throw "Register ECX already allocated!";
+            used_registers.push_back(ecx);
             Arguments[3]->Emit(state, ecx);
         }
         if (argc > 4)
         {
-            auto r8d = state.GetRegister(RegisterIndex::R8D, RegisterLength::_32);
+            Register r8d;
+            if(!state.AllocRegister(RegisterIndex::R8D, RegisterLength::_32, r8d))
+                throw "Register R8D already allocated!";
+            used_registers.push_back(r8d);
             Arguments[4]->Emit(state, r8d);
         }
         if (argc > 5)
         {
-            auto r9d = state.GetRegister(RegisterIndex::R9D, RegisterLength::_32);
+            Register r9d;
+            if(!state.AllocRegister(RegisterIndex::R9D, RegisterLength::_32, r9d))
+                throw "Register R9D already allocated!";
+            used_registers.push_back(r9d);
             Arguments[5]->Emit(state, r9d);
         }
         if (argc > 6)
@@ -92,11 +113,23 @@ namespace Cminus { namespace AST
             }
             state.FreeRegister(reg);
         }
-        auto eax = state.GetRegister(RegisterIndex::EAX, RegisterLength::_32);
+
+        Register eax = destination;
+        if (destination.Index != RegisterIndex::EAX)
+        {
+            if(!state.AllocRegister(RegisterIndex::EAX, RegisterLength::_32, eax))
+                throw "Register EAX already allocated!";
+            used_registers.push_back(eax);
+        }
         ASM::Zero(state, eax);
         ASM::Call(state, ID);
-        if(destination.Index != RegisterIndex::EAX)
+        if (destination.Index != RegisterIndex::EAX)
+        {
             ASM::Move(state, destination, eax);
+            state.RestoreRegisters();
+        }
+        for (auto&& r: used_registers)
+            state.FreeRegister(r);
         state.RestoreRegisters();
     }
 }}

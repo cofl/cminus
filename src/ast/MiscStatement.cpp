@@ -68,7 +68,7 @@ namespace Cminus { namespace AST
 
     void ContinueStatementASTNode::Emit(State& state)
     {
-        ASM::JumpBackward(state, state.GetContinueLabel());
+        ASM::JumpForward(state, state.GetContinueLabel());
     }
 
     void ExitStatementASTNode::Emit(State& state)

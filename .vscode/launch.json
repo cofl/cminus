@@ -10,7 +10,7 @@
             "request": "launch",
             "program": "${command:extension.vscode-wsl-workspaceFolder}/cmc",
             "args": [
-                "${command:extension.vscode-wsl-workspaceFolder}/input/11.array.cm",
+                "${command:extension.vscode-wsl-workspaceFolder}/input/22.guess.cm",
                 "-o", "${command:extension.vscode-wsl-workspaceFolder}/test.s"
             ],
             "stopAtEntry": true,
