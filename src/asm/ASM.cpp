@@ -31,7 +31,7 @@ namespace Cminus { namespace ASM
                 state.OutputStream << "\t.text" << endl;
                 break;
             case SectionType::ROData:
-                state.OutputStream << "\t.section rodata" << endl;
+                state.OutputStream << "\t.section .rodata" << endl;
                 break;
         }
     }
