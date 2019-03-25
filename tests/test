@@ -51,7 +51,7 @@ if [ $# -gt 0 ]; then
 else
     TEST_FILES=$TEST_SOURCE_DIR
 fi
-TEST_FILES=$((for item in $TEST_FILES; do echo $item; done) | xargs -I{} find {} -name *.cm -type f)
+TEST_FILES=`ls -v $((for item in $TEST_FILES; do echo $item; done) | xargs -I{} find {} -name *.cm -type f) | xargs -I{} realpath {}`
 FILE_COUNT=$(echo "$TEST_FILES" | wc -w)
 
 # Build CMC
