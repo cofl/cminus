@@ -1,5 +1,6 @@
 #include "BinaryOperationASTNode.hpp"
 #include "../asm/ASM.hpp"
+#include "../asm/Source.hpp"
 #include <iostream>
 
 namespace Cminus { namespace AST
@@ -42,8 +43,8 @@ namespace Cminus { namespace AST
             case ASTOperationType::Divide:
             case ASTOperationType::Modulo:
             {
-                auto eax = state.GetRegister(RegisterIndex::EAX, RegisterLength::_32);
-                auto edx = state.GetRegister(RegisterIndex::EDX, RegisterLength::_32);
+                auto eax = Register::Get(RegisterIndex::EAX);
+                auto edx = Register::Get(RegisterIndex::EDX);
 
                 // manually reserve edx if it isn't already
                 auto edxs = state.RegisterStatus(edx);
@@ -103,8 +104,8 @@ namespace Cminus { namespace AST
         LeftSide->Emit(state, destination);
 
         auto rsr = state.AllocRegister(RegisterLength::_32);
-        auto dst8 = destination.Name(RegisterLength::_8);
         RightSide->Emit(state, rsr);
+        Source source(state, RightSide);
         switch(Operation)
         {
             case ASTOperationType::Exponentiation:

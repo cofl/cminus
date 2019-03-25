@@ -31,8 +31,7 @@ namespace Cminus
 
 #pragma region Registers
         public:
-            Register& GetRegister(RegisterIndex index, RegisterLength length);
-            Register& AllocRegister(RegisterLength length);
+            const Register& AllocRegister(RegisterLength length);
             bool AllocRegister(RegisterIndex index, RegisterLength length, Register& out);
             bool RegisterStatus(Register& in);
             void SetRegisterStatus(Register& in, bool value);
@@ -41,10 +40,6 @@ namespace Cminus
             void RestoreRegisters();
         private:
             bool RegisterIsFree[14];
-            Register Register8[14];
-            Register Register16[14];
-            Register Register32[14];
-            Register Register64[14];
             vector<vector<RegisterIndex>> SavedRegisters;
 #pragma endregion
 

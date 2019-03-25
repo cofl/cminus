@@ -39,13 +39,13 @@ namespace Cminus { namespace AST
         Register reg, rdi, eax;
         if(!state.AllocRegister(RegisterIndex::RSI, RegisterLength::_64, reg))
             throw "Register RSI already allocated!";
+        Variable->EmitLValue(state, reg);
         if(!state.AllocRegister(RegisterIndex::RDI, RegisterLength::_64, rdi))
             throw "Register RDI already allocated!";
+        ASM::LoadGlobalAddress(state, rdi, ".int_rformat");
         if(!state.AllocRegister(RegisterIndex::EAX, RegisterLength::_32, eax))
             throw "Register EAX already allocated!";
-        Variable->EmitLValue(state, reg);
-        ASM::LoadGlobalAddress(state, rdi, ".int_rformat");
-        ASM::Zero(state, state.GetRegister(RegisterIndex::EAX, RegisterLength::_32));
+        ASM::Zero(state, eax);
         ASM::Call(state, "scanf@PLT");
         state.FreeRegister(reg);
         state.FreeRegister(rdi);
@@ -69,12 +69,12 @@ namespace Cminus { namespace AST
             Register esi, rdi, eax;
             if(!state.AllocRegister(RegisterIndex::ESI, RegisterLength::_32, esi))
                 throw "Register ESI already allocated!";
+            Value->Emit(state, esi);
             if(!state.AllocRegister(RegisterIndex::RDI, RegisterLength::_64, rdi))
                 throw "Register RDI already allocated!";
+            ASM::LoadGlobalAddress(state, rdi, ".int_wformat");
             if(!state.AllocRegister(RegisterIndex::EAX, RegisterLength::_32, eax))
                 throw "Register EAX already allocated!";
-            Value->Emit(state, esi);
-            ASM::LoadGlobalAddress(state, rdi, ".int_wformat");
             ASM::Zero(state, eax);
             ASM::Call(state, "printf@PLT");
             state.FreeRegister(esi);

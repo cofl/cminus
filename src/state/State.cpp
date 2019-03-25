@@ -24,70 +24,6 @@ namespace Cminus
             RegisterIsFree {
                 true, true, true, true, true, true, true,
                 true, true, true, true, true, true, true
-            },
-            Register8{
-                Register(RegisterIndex::AL, RegisterLength::_8),
-                Register(RegisterIndex::BL, RegisterLength::_8),
-                Register(RegisterIndex::CL, RegisterLength::_8),
-                Register(RegisterIndex::DL, RegisterLength::_8),
-                Register(RegisterIndex::SIL, RegisterLength::_8),
-                Register(RegisterIndex::DIL, RegisterLength::_8),
-                Register(RegisterIndex::R8B, RegisterLength::_8),
-                Register(RegisterIndex::R9B, RegisterLength::_8),
-                Register(RegisterIndex::R10B, RegisterLength::_8),
-                Register(RegisterIndex::R11B, RegisterLength::_8),
-                Register(RegisterIndex::R12B, RegisterLength::_8),
-                Register(RegisterIndex::R13B, RegisterLength::_8),
-                Register(RegisterIndex::R14B, RegisterLength::_8),
-                Register(RegisterIndex::R15B, RegisterLength::_8)
-            },
-            Register16{
-                Register(RegisterIndex::AX, RegisterLength::_16),
-                Register(RegisterIndex::BX, RegisterLength::_16),
-                Register(RegisterIndex::CX, RegisterLength::_16),
-                Register(RegisterIndex::DX, RegisterLength::_16),
-                Register(RegisterIndex::SI, RegisterLength::_16),
-                Register(RegisterIndex::DI, RegisterLength::_16),
-                Register(RegisterIndex::R8W, RegisterLength::_16),
-                Register(RegisterIndex::R9W, RegisterLength::_16),
-                Register(RegisterIndex::R10W, RegisterLength::_16),
-                Register(RegisterIndex::R11W, RegisterLength::_16),
-                Register(RegisterIndex::R12W, RegisterLength::_16),
-                Register(RegisterIndex::R13W, RegisterLength::_16),
-                Register(RegisterIndex::R14W, RegisterLength::_16),
-                Register(RegisterIndex::R15W, RegisterLength::_16)
-            },
-            Register32 {
-                Register(RegisterIndex::EAX, RegisterLength::_32),
-                Register(RegisterIndex::EBX, RegisterLength::_32),
-                Register(RegisterIndex::ECX, RegisterLength::_32),
-                Register(RegisterIndex::EDX, RegisterLength::_32),
-                Register(RegisterIndex::ESI, RegisterLength::_32),
-                Register(RegisterIndex::EDI, RegisterLength::_32),
-                Register(RegisterIndex::R8D, RegisterLength::_32),
-                Register(RegisterIndex::R9D, RegisterLength::_32),
-                Register(RegisterIndex::R10D, RegisterLength::_32),
-                Register(RegisterIndex::R11D, RegisterLength::_32),
-                Register(RegisterIndex::R12D, RegisterLength::_32),
-                Register(RegisterIndex::R13D, RegisterLength::_32),
-                Register(RegisterIndex::R14D, RegisterLength::_32),
-                Register(RegisterIndex::R15D, RegisterLength::_32)
-            },
-            Register64 {
-                Register(RegisterIndex::RAX, RegisterLength::_64),
-                Register(RegisterIndex::RBX, RegisterLength::_64),
-                Register(RegisterIndex::RCX, RegisterLength::_64),
-                Register(RegisterIndex::RDX, RegisterLength::_64),
-                Register(RegisterIndex::RSI, RegisterLength::_64),
-                Register(RegisterIndex::RDI, RegisterLength::_64),
-                Register(RegisterIndex::R8, RegisterLength::_64),
-                Register(RegisterIndex::R9, RegisterLength::_64),
-                Register(RegisterIndex::R10, RegisterLength::_64),
-                Register(RegisterIndex::R11, RegisterLength::_64),
-                Register(RegisterIndex::R12, RegisterLength::_64),
-                Register(RegisterIndex::R13, RegisterLength::_64),
-                Register(RegisterIndex::R14, RegisterLength::_64),
-                Register(RegisterIndex::R15, RegisterLength::_64)
             }
     {
         SymbolStack.push_back(globalTable);
@@ -95,24 +31,14 @@ namespace Cminus
         Types.push_back("string");
     }
 
-    Register& State::AllocRegister(RegisterLength length)
+    const Register& State::AllocRegister(RegisterLength length)
     {
         for(int i = 0; i < 14; i += 1)
         {
             if(RegisterIsFree[i])
             {
                 RegisterIsFree[i] = false;
-                switch (length)
-                {
-                    case RegisterLength::_8:
-                        return Register8[(int) i];
-                    case RegisterLength::_16:
-                        return Register16[(int) i];
-                    case RegisterLength::_32:
-                        return Register32[(int) i];
-                    case RegisterLength::_64:
-                        return Register64[(int) i];
-                }
+                return Register::Get((RegisterIndex) i, length);
             }
         }
         throw "No register is available!";
@@ -123,36 +49,8 @@ namespace Cminus
         if (!RegisterIsFree[(int) index])
             return false;
         RegisterIsFree[(int) index] = false;
-        switch (length)
-        {
-            case RegisterLength::_8:
-                out = Register8[(int) index];
-                return true;
-            case RegisterLength::_16:
-                out = Register16[(int) index];
-                return true;
-            case RegisterLength::_32:
-                out = Register32[(int) index];
-                return true;
-            case RegisterLength::_64:
-                out = Register64[(int) index];
-                return true;
-        }
-    }
-
-    Register& State::GetRegister(RegisterIndex index, RegisterLength length)
-    {
-        switch (length)
-        {
-            case RegisterLength::_8:
-                return Register8[(int) index];
-            case RegisterLength::_16:
-                return Register16[(int) index];
-            case RegisterLength::_32:
-                return Register32[(int) index];
-            case RegisterLength::_64:
-                return Register64[(int) index];
-        }
+        out = Register::Get(index, length);
+        return true;
     }
 
     bool State::RegisterStatus(Register& in)
@@ -178,7 +76,7 @@ namespace Cminus
         for(;count > 0; count -= 1)
         {
             auto regi = va_arg(args, RegisterIndex);
-            auto reg = GetRegister(regi, RegisterLength::_64);
+            auto reg = Register::Get(regi, RegisterLength::_64);
             if(!RegisterIsFree[(int) regi])
             {
                 saved.push_back(regi);
@@ -195,7 +93,7 @@ namespace Cminus
         SavedRegisters.pop_back();
         for(int i = saved.size() - 1; i >= 0; i -= 1)
         {
-            auto reg = GetRegister(saved[i], RegisterLength::_64);
+            auto reg = Register::Get(saved[i], RegisterLength::_64);
             OutputStream << "\tpop " << reg.Name() << endl;
             RegisterIsFree[(int) saved[i]] = false;
         }

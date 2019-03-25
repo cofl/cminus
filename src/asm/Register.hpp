@@ -51,6 +51,9 @@ namespace Cminus { namespace ASM
             const string& Name();
             const string& Name(RegisterLength otherlength);
             friend ostream& operator<<(ostream& stream, Register& reg);
+
+            static const Register& Get(RegisterIndex index);
+            static const Register& Get(RegisterIndex index, RegisterLength length);
         private:
     };
 }}
