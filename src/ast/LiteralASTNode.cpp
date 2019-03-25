@@ -25,30 +25,29 @@ namespace Cminus { namespace AST
         IsConstant = true;
     }
 
-    ASTNode* IntegerLiteralASTNode::Check(DriverState& state)
+    ASTNode* IntegerLiteralASTNode::Check(State& state)
     {
         return this;
     }
 
-    ASTNode* StringLiteralASTNode::Check(DriverState& state)
+    ASTNode* StringLiteralASTNode::Check(State& state)
     {
-        auto id = state.AddStringConstant(Value);
-        Value = std::string(".string_constant").append(to_string(id));
+        Value = state.InternStringLiteral(Value);
         return this;
     }
 
-    void ArrayLiteralASTNode::Emit(DriverState& state, const char* destinationRegister)
+    void ArrayLiteralASTNode::Emit(State& state, Register& destination)
     {
         // TODO
     }
 
-    void IntegerLiteralASTNode::Emit(DriverState& state, const char* destinationRegister)
+    void IntegerLiteralASTNode::Emit(State& state, Register& destination)
     {
-        state.OutputStream << "\tmov " << destinationRegister << ", " << Value << endl;
+        state.OutputStream << "\tmov " << destination.Name() << ", " << Value << endl;
     }
 
-    void StringLiteralASTNode::Emit(DriverState& state, const char* destinationRegister)
+    void StringLiteralASTNode::Emit(State& state, Register& destination)
     {
-        state.OutputStream << "\tlea " << destinationRegister << ", " << Value << "[rip]" << endl;
+        state.OutputStream << "\tlea " << destination.Name() << ", " << Value << "[rip]" << endl;
     }
 }}

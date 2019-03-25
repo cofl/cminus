@@ -13,7 +13,7 @@ namespace Cminus { namespace AST
         // nop
     }
 
-    ASTNode* StatementListASTNode::Check(DriverState& state)
+    ASTNode* StatementListASTNode::Check(State& state)
     {
         if(nullptr == Symbols)
         {
@@ -34,7 +34,7 @@ namespace Cminus { namespace AST
         return this;
     }
 
-    void StatementListASTNode::Emit(DriverState& state)
+    void StatementListASTNode::Emit(State& state)
     {
         if(!Symbols->Variables.empty())
         {

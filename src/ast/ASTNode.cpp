@@ -10,13 +10,13 @@ namespace Cminus { namespace AST
         // nop
     }
 
-    ASTNode* ASTNode::Check(DriverState& state)
+    ASTNode* ASTNode::Check(State& state)
     {
         // do-nothing as a default
         return this;
     }
 
-    void ASTNode::Emit(DriverState& state)
+    void ASTNode::Emit(State& state)
     {
         // TODO: better error handling
         state.OutputStream << "{{Unknown Node}}" << std::endl;

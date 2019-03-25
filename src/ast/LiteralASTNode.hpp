@@ -3,8 +3,6 @@
 
 #include "ASTNode.hpp"
 #include "ExpressionASTNode.hpp"
-#include "../structures/SymbolTable.hpp"
-#include "../DriverState.hpp"
 #include <string>
 
 namespace Cminus { namespace AST
@@ -15,8 +13,8 @@ namespace Cminus { namespace AST
             IntegerLiteralASTNode(int typeID, int value);
             int Value;
 
-            ASTNode* Check(DriverState& state);
-            void Emit(DriverState& state, const char* destinationRegister);
+            ASTNode* Check(State& state);
+            void Emit(State& state, Register& destination);
     };
 
     class StringLiteralASTNode : public ExpressionASTNode
@@ -25,8 +23,8 @@ namespace Cminus { namespace AST
             StringLiteralASTNode(int typeID, string value);
             string Value;
 
-            ASTNode* Check(DriverState& state);
-            void Emit(DriverState& state, const char* destinationRegister);
+            ASTNode* Check(State& state);
+            void Emit(State& state, Register& destination);
     };
 
     class ArrayLiteralASTNode : public ExpressionASTNode
@@ -35,7 +33,7 @@ namespace Cminus { namespace AST
             ArrayLiteralASTNode(int memberTypeID);
             std::vector<ExpressionASTNode*> Members;
 
-            void Emit(DriverState& state, const char* destinationRegister);
+            void Emit(State& state, Register& destination);
     };
 }}
 

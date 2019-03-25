@@ -22,20 +22,20 @@ namespace Cminus { namespace AST
         // nop
     }
 
-    void ExpressionASTNode::Emit(DriverState& state)
+    void ExpressionASTNode::Emit(State& state)
     {
-        auto index = state.GetFreeRegister();
-        Emit(state, state.RegisterNames32[index]);
-        state.ReleaseRegister(index);
+        auto reg = state.AllocRegister(RegisterLength::_32);
+        Emit(state, reg);
+        state.FreeRegister(reg);
     }
 
-    void ExpressionASTNode::Emit(DriverState& state, const char* destinationRegister)
+    void ExpressionASTNode::Emit(State& state, Register& destination)
     {
         // TODO: better error handling
         state.OutputStream << "{{Unknown expresion}}" << endl;
     }
 
-    void ExpressionASTNode::EmitLValue(DriverState& state, const char* destinationRegister)
+    void ExpressionASTNode::EmitLValue(State& state, Register& destination)
     {
         // TODO: better error handling
         state.OutputStream << "{{Unknown expresion}}" << endl;

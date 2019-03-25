@@ -3,8 +3,6 @@
 
 #include "ASTNode.hpp"
 #include "StatementListASTNode.hpp"
-#include "../structures/SymbolTable.hpp"
-#include "../DriverState.hpp"
 
 namespace Cminus { namespace AST
 {
@@ -13,7 +11,7 @@ namespace Cminus { namespace AST
         public:
             GlobalStatementListASTNode();
 
-            void Emit(DriverState& state);
+            void Emit(State& state);
     };
 }}
 

@@ -3,8 +3,6 @@
 
 #include "ASTNode.hpp"
 #include "ExpressionASTNode.hpp"
-#include "../structures/SymbolTable.hpp"
-#include "../DriverState.hpp"
 
 namespace Cminus { namespace AST
 {
@@ -14,8 +12,8 @@ namespace Cminus { namespace AST
             ExpressionListASTNode();
             std::vector<ExpressionASTNode*> Members;
 
-            ASTNode* Check(DriverState& state);
-            void Emit(DriverState& state, const char* destinationRegister);
+            ASTNode* Check(State& state);
+            void Emit(State& state, Register& destinationRegister);
     };
 }}
 

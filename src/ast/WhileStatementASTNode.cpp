@@ -1,4 +1,5 @@
 #include "WhileStatementASTNode.hpp"
+#include "../asm/ASM.hpp"
 #include <iostream>
 
 namespace Cminus { namespace AST
@@ -13,7 +14,7 @@ namespace Cminus { namespace AST
 
     }
 
-    ASTNode* WhileStatementASTNode::Check(DriverState& state)
+    ASTNode* WhileStatementASTNode::Check(State& state)
     {
         Test->Symbols = this->Symbols;
         Body->Symbols = this->Symbols;
@@ -26,23 +27,23 @@ namespace Cminus { namespace AST
         return this;
     }
 
-    void WhileStatementASTNode::Emit(DriverState& state)
+    void WhileStatementASTNode::Emit(State& state)
     {
-        int beginLabel = state.TemporaryLabelIndex;
-        int testLabel = state.TemporaryLabelIndex + 1;
-        int afterLabel = state.TemporaryLabelIndex + 2;
-        state.TemporaryLabelIndex += 3;
+        int beginLabel = state.NextFreeLabel;
+        int testLabel = state.NextFreeLabel + 1;
+        int afterLabel = state.NextFreeLabel + 2;
+        state.NextFreeLabel += 3;
         state.ContinueLabels.push_back(testLabel);
         state.BreakLabels.push_back(afterLabel);
-        state.OutputStream << "\tjmp " << testLabel << 'f'  << endl
-                           << beginLabel << ':'             << endl;
+        ASM::JumpForward(state, testLabel);
+        ASM::Label(state, beginLabel);
         Body->Emit(state);
-        state.OutputStream << testLabel << ':'              << endl;
-        Test->Emit(state, "eax");
-        state.OutputStream << "\tcmp eax, 0"                << endl
-                           << "\tjnz " << beginLabel << 'b' << endl
-                           << afterLabel << ':'             << endl;
-        state.TemporaryLabelIndex -= 2;
+        ASM::Label(state, testLabel);
+        Test->Emit(state, state.GetRegister(RegisterIndex::EAX, RegisterLength::_32));
+        state.OutputStream << "\tcmp eax, 0" << endl
+                           << "\tjnz " << beginLabel << 'b' << endl;
+        ASM::Label(state, afterLabel);
+        state.NextFreeLabel -= 3;
         state.BreakLabels.pop_back();
         state.ContinueLabels.pop_back();
     }

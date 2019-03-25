@@ -2,7 +2,7 @@
     #define ASTNode_HPP
 
 #include "../structures/SymbolTable.hpp"
-#include "../DriverState.hpp"
+#include "../state/State.hpp"
 
 namespace Cminus { namespace AST
 {
@@ -69,8 +69,8 @@ namespace Cminus { namespace AST
             ASTNodeType NodeType;
             SymbolTable* Symbols;
 
-            virtual void Emit(DriverState& state);
-            virtual ASTNode* Check(DriverState& state);
+            virtual void Emit(State& state);
+            virtual ASTNode* Check(State& state);
     };
 }}
 

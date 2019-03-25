@@ -39,8 +39,8 @@
         "typeinfo": "cpp",
         "utility": "cpp",
         "memory": "cpp",
-        "variant": "cpp"
-    },
-    "cmake.configureOnOpen": false,
-    "cmake.cmakePath": "C:/Windows/System32/wsl.exe /usr/bin/cmake"
+        "variant": "cpp",
+        "bitset": "cpp",
+        "ctime": "cpp"
+    }
 }

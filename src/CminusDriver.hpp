@@ -6,7 +6,6 @@
     #include <iostream>
     #include <map>
     #include <vector>
-    #include "DriverState.hpp"
     #include "CminusParser.hpp"
     #include "ast/GlobalStatementListASTNode.hpp"
     #include "structures/SymbolTable.hpp"
@@ -31,10 +30,8 @@ namespace Cminus
             bool trace_scanning;
 
             std::vector<std::string> Types;
-            int GetTypeID(std::string&& typeName);
-
             GlobalStatementListASTNode* Root;
-            SymbolTable GlobalSymbolTable;
+            int GetTypeID(std::string&& typeName);
             void Process(std::ostream& outputStream);
         private:
             Scanner* scanner;

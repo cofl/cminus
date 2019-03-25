@@ -14,7 +14,7 @@ namespace Cminus { namespace AST
         // TODO: type
     }
 
-    ASTNode* BinaryOperationASTNode::Check(DriverState& state)
+    ASTNode* BinaryOperationASTNode::Check(State& state)
     {
         LeftSide->Symbols = this->Symbols;
         RightSide->Symbols = this->Symbols;
@@ -25,197 +25,173 @@ namespace Cminus { namespace AST
         return this;
     }
 
-    void BinaryOperationASTNode::Emit(DriverState& state, const char* destinationRegister)
+    void BinaryOperationASTNode::Emit(State& state, Register& destination)
     {
         if(Operation == ASTOperationType::Assign)
         {
             //TODO: check if lvalue
-            RightSide->Emit(state, destinationRegister);
-            auto lsri = state.GetFreeRegister();
-            auto lsrn = state.RegisterNames64[lsri];
-            LeftSide->EmitLValue(state, lsrn);
-            state.OutputStream << "\tmov [" << lsrn << "], " << destinationRegister << endl;
-            state.ReleaseRegister(lsri);
+            RightSide->Emit(state, destination);
+            auto lsr = state.AllocRegister(RegisterLength::_64);
+            LeftSide->EmitLValue(state, lsr);
+            state.OutputStream << "\tmov [" << lsr.Name() << "], " << destination.Name() << endl;
+            state.FreeRegister(lsr);
             return;
         } else if(Operation == ASTOperationType::Divide)
         {
-            auto eaxi = state.GetRegisterID("eax");
-            auto edxi = state.GetRegisterID("edx");
-            auto dsti = state.GetRegisterID(destinationRegister);
+            auto eax = state.GetRegister(RegisterIndex::EAX, RegisterLength::_32);
+            auto edx = state.GetRegister(RegisterIndex::EDX, RegisterLength::_32);
 
             // manually reserve edx if it isn't already
-            auto edxf = state.FreeRegisters[edxi];
-            state.FreeRegisters[edxi] = false;
+            auto edxs = state.RegisterStatus(edx);
+            state.SetRegisterStatus(edx, false);
 
-            if(dsti == eaxi)
+            if(destination.Index == RegisterIndex::EAX)
             {
-                LeftSide->Emit(state, "eax");
-                state.SaveRegisters(1, "rdx");
-                state.OutputStream << "\tmov edx, 0" << endl;
-                auto rsri = state.GetFreeRegister();
-                auto rsrn = state.RegisterNames32[rsri];
-                RightSide->Emit(state, rsrn);
-                state.OutputStream << "\tidiv " << rsrn << endl;
-                state.RestoreRegisters();
-                state.ReleaseRegister(rsri);
-            } else if(dsti == edxi)
+                LeftSide->Emit(state, destination);
+                state.SaveRegisters(1, RegisterIndex::RDX);
+            } else if(destination.Index == RegisterIndex::EDX)
             {
-                state.SaveRegisters(1, "rax");
-                LeftSide->Emit(state, "eax");
-                state.OutputStream << "\tmov edx, 0" << endl;
-                auto rsri = state.GetFreeRegister();
-                auto rsrn = state.RegisterNames32[rsri];
-                RightSide->Emit(state, rsrn);
-                state.OutputStream << "\tidiv " << rsrn << endl
-                                   << "\tmov edx, eax"  << endl;
-                state.RestoreRegisters();
-                state.ReleaseRegister(rsri);
+                state.SaveRegisters(1, RegisterIndex::RAX);
+                LeftSide->Emit(state, eax);
             } else
             {
-                state.SaveRegisters(2, "rax", "rdx");
-                LeftSide->Emit(state, "eax");
-                state.OutputStream << "\tmov edx, 0" << endl;
-                auto rsri = state.GetFreeRegister();
-                auto rsrn = state.RegisterNames32[rsri];
-                RightSide->Emit(state, rsrn);
-                state.OutputStream << "\tidiv " << rsrn << endl
-                                   << "\tmov " << destinationRegister << ", eax"  << endl;
-                state.RestoreRegisters();
-                state.ReleaseRegister(rsri);
+                state.SaveRegisters(2, RegisterIndex::RAX, RegisterIndex::RDX);
+                LeftSide->Emit(state, eax);
             }
 
-            // restore original reservation of edx
-            state.FreeRegisters[edxi] = edxf;
+            state.OutputStream << "\tmov edx, 0" << endl;
+            auto rsr = state.AllocRegister(RegisterLength::_32);
+            RightSide->Emit(state, rsr);
+            state.OutputStream << "\tidiv " << rsr.Name() << endl;
+
+            if (destination.Index != RegisterIndex::EAX)
+            {
+                state.OutputStream << "\tmov " << destination.Name() << ", eax" << endl;
+            }
+
+            // cleanup, restore edx state
+            state.FreeRegister(rsr);
+            state.RestoreRegisters();
+            state.SetRegisterStatus(edx, edxs);
             return;
         } else if(Operation == ASTOperationType::Modulo)
         {
-            auto eaxi = state.GetRegisterID("eax");
-            auto edxi = state.GetRegisterID("edx");
-            auto dsti = state.GetRegisterID(destinationRegister);
-            // manually reserve edx if it isn't already
-            auto edxf = state.FreeRegisters[edxi];
-            state.FreeRegisters[edxi] = false;
+            auto eax = state.GetRegister(RegisterIndex::EAX, RegisterLength::_32);
+            auto edx = state.GetRegister(RegisterIndex::EDX, RegisterLength::_32);
 
-            if(dsti == eaxi)
+            // manually reserve edx if it isn't already
+            auto edxs = state.RegisterStatus(edx);
+            state.SetRegisterStatus(edx, false);
+
+            if(destination.Index == RegisterIndex::EAX)
             {
-                LeftSide->Emit(state, "eax");
-                state.SaveRegisters(1, "rdx");
-                state.OutputStream << "\tmov edx, 0" << endl;
-                auto rsri = state.GetFreeRegister();
-                auto rsrn = state.RegisterNames32[rsri];
-                RightSide->Emit(state, rsrn);
-                state.OutputStream << "\tidiv " << rsrn << endl
-                                   << "\tmov eax, edx"  << endl;
-                state.RestoreRegisters();
-                state.ReleaseRegister(rsri);
-            } else if(dsti == edxi)
+                LeftSide->Emit(state, destination);
+                state.SaveRegisters(1, RegisterIndex::RDX);
+            } else if(destination.Index == RegisterIndex::EDX)
             {
-                state.OutputStream << "\tpush rax"  << endl;
-                state.SaveRegisters(1, "rax");
-                LeftSide->Emit(state, "eax");
-                state.OutputStream << "\tmov edx, 0" << endl;
-                auto rsri = state.GetFreeRegister();
-                auto rsrn = state.RegisterNames32[rsri];
-                RightSide->Emit(state, rsrn);
-                state.OutputStream << "\tidiv " << rsrn << endl;
-                state.RestoreRegisters();
-                state.ReleaseRegister(rsri);
+                state.SaveRegisters(1, RegisterIndex::RAX);
+                LeftSide->Emit(state, eax);
             } else
             {
-                state.SaveRegisters(2, "rax", "rdx");
-                LeftSide->Emit(state, "eax");
-                state.OutputStream << "\tmov edx, 0" << endl;
-                auto rsri = state.GetFreeRegister();
-                auto rsrn = state.RegisterNames32[rsri];
-                RightSide->Emit(state, rsrn);
-                state.OutputStream << "\tidiv " << rsrn << endl
-                                   << "\tmov " << destinationRegister << ", edx"  << endl;
-                state.RestoreRegisters();
-                state.ReleaseRegister(rsri);
+                state.SaveRegisters(2, RegisterIndex::RAX, RegisterIndex::RDX);
+                LeftSide->Emit(state, eax);
             }
 
-            // restore original reservation of edx
-            state.FreeRegisters[edxi] = edxf;
+            state.OutputStream << "\tmov edx, 0" << endl;
+            auto rsr = state.AllocRegister(RegisterLength::_32);
+            RightSide->Emit(state, rsr);
+            state.OutputStream << "\tidiv " << rsr.Name() << endl;
+
+            if (destination.Index != RegisterIndex::EDX)
+            {
+                state.OutputStream << "\tmov " << destination.Name() << ", edx" << endl;
+            }
+
+            // cleanup, restore edx state
+            state.FreeRegister(rsr);
+            state.RestoreRegisters();
+            state.SetRegisterStatus(edx, edxs);
             return;
         }
-        LeftSide->Emit(state, destinationRegister);
-        auto rsri = state.GetFreeRegister();
-        auto rsrn = state.RegisterNames32[rsri];
-        RightSide->Emit(state, rsrn);
-        auto dst8 = state.GetRegister8(destinationRegister);
+
+        LeftSide->Emit(state, destination);
+
+        auto rsr = state.AllocRegister(RegisterLength::_32);
+        auto dst8 = destination.Name(RegisterLength::_8);
+        RightSide->Emit(state, rsr);
         switch(Operation)
         {
             case ASTOperationType::Exponentiation:
                 state.OutputStream << " ** "; // TODO
                 break;
             case ASTOperationType::Multiply:
-                state.OutputStream << "\timul " << destinationRegister << ", " << rsrn << endl;
+                state.OutputStream << "\timul " << destination.Name() << ", " << rsr.Name() << endl;
                 break;
             case ASTOperationType::Add:
-                state.OutputStream << "\tadd " << destinationRegister << ", " << rsrn << endl;
+                state.OutputStream << "\tadd " << destination.Name() << ", " << rsr.Name() << endl;
                 break;
             case ASTOperationType::Subtract:
-                state.OutputStream << "\tsub " << destinationRegister << ", " << rsrn << endl;
+                state.OutputStream << "\tsub " << destination.Name() << ", " << rsr.Name() << endl;
                 break;
             case ASTOperationType::RightShift:
-                state.OutputStream << "\tshr " << destinationRegister << ", " << rsrn << endl;
+                state.OutputStream << "\tshr " << destination.Name() << ", " << rsr.Name() << endl;
                 break;
             case ASTOperationType::LeftShift:
-                state.OutputStream << "\tshl " << destinationRegister << ", " << rsrn << endl;
+                state.OutputStream << "\tshl " << destination.Name() << ", " << rsr.Name() << endl;
                 break;
             case ASTOperationType::BinaryXor:
-                state.OutputStream << "\txor " << destinationRegister << ", " << rsrn << endl;
+                state.OutputStream << "\txor " << destination.Name() << ", " << rsr.Name() << endl;
                 break;
             case ASTOperationType::BinaryOr:
-                state.OutputStream << "\tor " << destinationRegister << ", " << rsrn << endl;
+                state.OutputStream << "\tor " << destination.Name() << ", " << rsr.Name() << endl;
                 break;
             case ASTOperationType::LogicalOr:
-                state.OutputStream << "\tor "    << destinationRegister << ", " << rsrn << endl
-                                   << "\tcmp "   << destinationRegister << ", 0"        << endl
-                                   << "\tsetnz " << dst8                                << endl
-                                   << "\tmovzx " << destinationRegister << ", " << dst8 << endl;
+                state.OutputStream << "\tor "    << destination.Name() << ", " << rsr.Name() << endl
+                                   << "\tcmp "   << destination.Name() << ", 0"              << endl
+                                   << "\tsetnz " << dst8                                     << endl
+                                   << "\tmovzx " << destination.Name() << ", " << dst8       << endl;
                 break;
             case ASTOperationType::BinaryAnd:
-                state.OutputStream << "\tand " << destinationRegister << ", " << rsrn << endl;
+                state.OutputStream << "\tand " << destination.Name() << ", " << rsr.Name()   << endl;
                 break;
             case ASTOperationType::LogicalAnd:
-                state.OutputStream << "\ttest "  << destinationRegister << ", " << rsrn << endl
-                                   << "\tsetnz " << dst8                                << endl
-                                   << "\tmovzx " << destinationRegister << ", " << dst8 << endl;
+                state.OutputStream << "\ttest "  << destination.Name() << ", " << rsr.Name() << endl
+                                   << "\tsetnz " << dst8                                     << endl
+                                   << "\tmovzx " << destination.Name() << ", " << dst8       << endl;
                 break;
             case ASTOperationType::TestGT:
-                state.OutputStream << "\tcmp "   << destinationRegister << ", " << rsrn << endl
-                                   << "\tsetg "  << dst8                                << endl
-                                   << "\tmovzx " << destinationRegister << ", " << dst8 << endl;
+                state.OutputStream << "\tcmp "   << destination.Name() << ", " << rsr.Name() << endl
+                                   << "\tsetg "  << dst8                                     << endl
+                                   << "\tmovzx " << destination.Name() << ", " << dst8       << endl;
                 break;
             case ASTOperationType::TestGE:
-                state.OutputStream << "\tcmp "   << destinationRegister << ", " << rsrn << endl
-                                   << "\tsetge " << dst8                                << endl
-                                   << "\tmovzx " << destinationRegister << ", " << dst8 << endl;
+                state.OutputStream << "\tcmp "   << destination.Name() << ", " << rsr.Name() << endl
+                                   << "\tsetge " << dst8                                     << endl
+                                   << "\tmovzx " << destination.Name() << ", " << dst8       << endl;
                 break;
             case ASTOperationType::TestLT:
-                state.OutputStream << "\tcmp "   << destinationRegister << ", " << rsrn << endl
-                                   << "\tsetl "  << dst8                                << endl
-                                   << "\tmovzx " << destinationRegister << ", " << dst8 << endl;
+                state.OutputStream << "\tcmp "   << destination.Name() << ", " << rsr.Name() << endl
+                                   << "\tsetl "  << dst8                                     << endl
+                                   << "\tmovzx " << destination.Name() << ", " << dst8       << endl;
                 break;
             case ASTOperationType::TestLE:
-                state.OutputStream << "\tcmp "   << destinationRegister << ", " << rsrn << endl
-                                   << "\tsetle " << dst8                                << endl
-                                   << "\tmovzx " << destinationRegister << ", " << dst8 << endl;
+                state.OutputStream << "\tcmp "   << destination.Name() << ", " << rsr.Name() << endl
+                                   << "\tsetle " << dst8                                     << endl
+                                   << "\tmovzx " << destination.Name() << ", " << dst8       << endl;
                 break;
             case ASTOperationType::TestNE:
-                state.OutputStream << "\tcmp "   << destinationRegister << ", " << rsrn << endl
-                                   << "\tsetnz " << dst8                                << endl
-                                   << "\tmovzx " << destinationRegister << ", " << dst8 << endl;
+                state.OutputStream << "\tcmp "   << destination.Name() << ", " << rsr.Name() << endl
+                                   << "\tsetnz " << dst8                                     << endl
+                                   << "\tmovzx " << destination.Name() << ", " << dst8       << endl;
                 break;
             case ASTOperationType::TestEQ:
-                state.OutputStream << "\tcmp "   << destinationRegister << ", " << rsrn << endl
-                                   << "\tsetz "  << dst8                                << endl
-                                   << "\tmovzx " << destinationRegister << ", " << dst8 << endl;
+                state.OutputStream << "\tcmp "   << destination.Name() << ", " << rsr.Name() << endl
+                                   << "\tsetz "  << dst8                                     << endl
+                                   << "\tmovzx " << destination.Name() << ", " << dst8       << endl;
                 break;
             default:
                 state.OutputStream << "{{unrecognized binary operation}}";
         }
-        state.ReleaseRegister(rsri);
+        state.FreeRegister(rsr);
     }
 }}

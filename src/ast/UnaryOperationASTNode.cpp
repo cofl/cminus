@@ -13,7 +13,7 @@ namespace Cminus { namespace AST
         // nop
     }
 
-    ASTNode* UnaryOperationASTNode::Check(DriverState& state)
+    ASTNode* UnaryOperationASTNode::Check(State& state)
     {
         Member->Symbols = this->Symbols;
         Member->Check(state);
@@ -25,22 +25,22 @@ namespace Cminus { namespace AST
         return this;
     }
 
-    void UnaryOperationASTNode::Emit(DriverState& state, const char* destinationRegister)
+    void UnaryOperationASTNode::Emit(State& state, Register& destination)
     {
-        Member->Emit(state, destinationRegister);
-        auto dst8 = state.GetRegister8(destinationRegister);
+        Member->Emit(state, destination);
+        auto dst8 = destination.Name(RegisterLength::_8);
         switch(Operation)
         {
             case ASTOperationType::Negation:
-                state.OutputStream << "\tneg " << destinationRegister << endl;
+                state.OutputStream << "\tneg " << destination.Name() << endl;
                 break;
             case ASTOperationType::BinaryNot:
-                state.OutputStream << "\tnot " << destinationRegister << endl;
+                state.OutputStream << "\tnot " << destination.Name() << endl;
                 break;
             case ASTOperationType::LogicalNot:
-                state.OutputStream << "\tcmp "   << destinationRegister << ", 0"        << endl
-                                   << "\tsetz "  << dst8                                << endl
-                                   << "\tmovzx " << destinationRegister << ", " << dst8 << endl;
+                state.OutputStream << "\tcmp "   << destination.Name() << ", 0"        << endl
+                                   << "\tsetz "  << dst8                               << endl
+                                   << "\tmovzx " << destination.Name() << ", " << dst8 << endl;
                 break;
             default:
                 state.OutputStream << "{{Unrecognized Unary Operation}}";

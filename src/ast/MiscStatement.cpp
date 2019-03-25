@@ -36,21 +36,21 @@ namespace Cminus { namespace AST
         // nop
     }
 
-    ASTNode* BreakStatementASTNode::Check(DriverState& state)
+    ASTNode* BreakStatementASTNode::Check(State& state)
     {
         if(state.BreakLabels.size() == 0)
             throw "Illegal break statement.";
         return this;
     }
 
-    ASTNode* ContinueStatementASTNode::Check(DriverState& state)
+    ASTNode* ContinueStatementASTNode::Check(State& state)
     {
         if(state.ContinueLabels.size() == 0)
             throw "Illegal continue statement.";
         return this;
     }
 
-    ASTNode* ReturnStatementASTNode::Check(DriverState& state)
+    ASTNode* ReturnStatementASTNode::Check(State& state)
     {
         if(nullptr != Value)
         {
@@ -60,30 +60,35 @@ namespace Cminus { namespace AST
         return this;
     }
 
-    void BreakStatementASTNode::Emit(DriverState& state)
+    void BreakStatementASTNode::Emit(State& state)
     {
         state.OutputStream << "\tjmp " << state.GetBreakLabel() << 'f' << endl;
     }
 
-    void ContinueStatementASTNode::Emit(DriverState& state)
+    void ContinueStatementASTNode::Emit(State& state)
     {
         state.OutputStream << "\tjmp " << state.GetContinueLabel() << 'f' << endl;
     }
 
-    void ExitStatementASTNode::Emit(DriverState& state)
+    void ExitStatementASTNode::Emit(State& state)
     {
         state.OutputStream << "{{exit;}}" << endl;
     }
 
-    void NopStatementASTNode::Emit(DriverState& state)
+    void NopStatementASTNode::Emit(State& state)
     {
         state.OutputStream << "\tnop" << endl;
     }
 
-    void ReturnStatementASTNode::Emit(DriverState& state)
+    void ReturnStatementASTNode::Emit(State& state)
     {
+        Register eax;
+        if(!state.AllocRegister(RegisterIndex::EAX, RegisterLength::_32, eax))
+        {
+            throw "Register EAX already in use!";
+        }
         if(nullptr != Value)
-            Value->Emit(state, "eax");
+            Value->Emit(state, eax);
         state.OutputStream << "\tleave" << endl
                            << "\tret"   << endl;
     }

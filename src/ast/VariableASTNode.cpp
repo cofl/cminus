@@ -23,7 +23,7 @@ namespace Cminus { namespace AST
         // TODO: type
     }
 
-    ASTNode* VariableASTNode::Check(DriverState& state)
+    ASTNode* VariableASTNode::Check(State& state)
     {
         auto data = Symbols->FindVariable(this->ID);
         this->Type = data->Type;
@@ -35,93 +35,93 @@ namespace Cminus { namespace AST
         return this;
     }
 
-    void VariableASTNode::Emit(DriverState& state, const char* destinationRegister)
+    void VariableASTNode::Emit(State& state, Register& destination)
     {
         auto data = Symbols->FindVariable(ID);
         if(data->IsGlobal)
         {
             if(nullptr != ArrayIndex)
             {
-                auto savedAx = state.GetRegisterID(destinationRegister) != state.GetRegisterID("eax");
+                auto savedAx = destination.Index != RegisterIndex::RAX;
                 if (savedAx)
                     state.OutputStream << "\tpush rax" << endl;
-                ArrayIndex->Emit(state, "eax");
-                auto tri = state.GetFreeRegister();
-                auto trn64 = state.RegisterNames64[tri];
+                auto eax = state.GetRegister(RegisterIndex::EAX, RegisterLength::_32);
+                ArrayIndex->Emit(state, eax);
+                auto reg = state.AllocRegister(RegisterLength::_64);
                 state.OutputStream << "\tcdqe" << endl
-                                   << "\tlea " << trn64 << ", 0[0+rax*4]"              << endl
-                                   << "\tlea rax, " << data->GlobalLocation << "[rip]" << endl
-                                   << "\tmov " << destinationRegister << ", [rax+" << trn64 << ']' << endl;
-                state.ReleaseRegister(tri);
+                                   << "\tlea " << reg.Name() << ", 0[0+rax*4]"                         << endl
+                                   << "\tlea rax, " << data->GlobalLocation << "[rip]"                 << endl
+                                   << "\tmov " << destination.Name() << ", [rax+" << reg.Name() << ']' << endl;
+                state.FreeRegister(reg);
                 if (savedAx)
                     state.OutputStream << "\tpop rax" << endl;
             } else
             {
-                state.OutputStream << "\tmov " << destinationRegister << ", " << data->GlobalLocation << "[rip]" << endl;
+                state.OutputStream << "\tmov " << destination.Name() << ", " << data->GlobalLocation << "[rip]" << endl;
             }
         } else if (nullptr != ArrayIndex)
         {
-            auto savedAx = state.GetRegisterID(destinationRegister) != state.GetRegisterID("eax");
+            auto savedAx = destination.Index != RegisterIndex::RAX;
             if (savedAx)
                 state.OutputStream << "\tpush rax" << endl;
-            ArrayIndex->Emit(state, "eax");
-            auto tri = state.GetFreeRegister();
-            auto trn64 = state.RegisterNames64[tri];
+            auto eax = state.GetRegister(RegisterIndex::EAX, RegisterLength::_32);
+            ArrayIndex->Emit(state, eax);
+            auto reg = state.AllocRegister(RegisterLength::_64);
             state.OutputStream << "\tcdqe" << endl
-                               << "\tlea " << trn64 << ", 0[0+rax*4]"           << endl
-                               << "\tlea rax, " << data->StackOffset << "[rbp]" << endl
-                               << "\tmov " << destinationRegister << ", [rax+" << trn64 << ']' << endl;
-            state.ReleaseRegister(tri);
+                               << "\tlea " << reg.Name() << ", 0[0+rax*4]"                         << endl
+                               << "\tlea rax, " << data->StackOffset << "[rbp]"                    << endl
+                               << "\tmov " << destination.Name() << ", [rax+" << reg.Name() << ']' << endl;
+            state.FreeRegister(reg);
             if (savedAx)
                 state.OutputStream << "\tpop rax" << endl;
         } else
         {
-            state.OutputStream << "\tmov " << destinationRegister << ", " << data->StackOffset << "[rbp]" << endl;
+            state.OutputStream << "\tmov " << destination.Name() << ", " << data->StackOffset << "[rbp]" << endl;
         }
     }
 
-    void VariableASTNode::EmitLValue(DriverState& state, const char* destinationRegister)
+    void VariableASTNode::EmitLValue(State& state, Register& destination)
     {
         auto data = Symbols->FindVariable(ID);
         if(data->IsGlobal)
         {
             if(nullptr != ArrayIndex)
             {
-                auto savedAx = state.GetRegisterID(destinationRegister) != state.GetRegisterID("eax");
+                auto savedAx = destination.Index != RegisterIndex::RAX;
                 if (savedAx)
                     state.OutputStream << "\tpush rax" << endl;
-                ArrayIndex->Emit(state, "eax");
-                auto tri = state.GetFreeRegister();
-                auto trn64 = state.RegisterNames64[tri];
+                auto eax = state.GetRegister(RegisterIndex::EAX, RegisterLength::_32);
+                ArrayIndex->Emit(state, eax);
+                auto reg = state.AllocRegister(RegisterLength::_64);
                 state.OutputStream << "\tcdqe" << endl
-                                   << "\tlea " << trn64 << ", 0[0+rax*4]"              << endl
-                                   << "\tlea rax, " << data->GlobalLocation << "[rip]" << endl
-                                   << "\tlea " << destinationRegister << ", [rax+" << trn64 << ']' << endl;
-                state.ReleaseRegister(tri);
+                                   << "\tlea " << reg.Name() << ", 0[0+rax*4]"                         << endl
+                                   << "\tlea rax, " << data->GlobalLocation << "[rip]"                 << endl
+                                   << "\tlea " << destination.Name() << ", [rax+" << reg.Name() << ']' << endl;
+                state.FreeRegister(reg);
                 if (savedAx)
                     state.OutputStream << "\tpop rax" << endl;
             } else
             {
-                state.OutputStream << "\tlea " << destinationRegister << ", " << data->GlobalLocation << "[rip]" << endl;
+                state.OutputStream << "\tlea " << destination.Name() << ", " << data->GlobalLocation << "[rip]" << endl;
             }
         } else if (nullptr != ArrayIndex)
         {
-            auto savedAx = state.GetRegisterID(destinationRegister) != state.GetRegisterID("eax");
+            auto savedAx = destination.Index != RegisterIndex::RAX;
             if (savedAx)
                 state.OutputStream << "\tpush rax" << endl;
-            ArrayIndex->Emit(state, "eax");
-            auto tri = state.GetFreeRegister();
-            auto trn64 = state.RegisterNames64[tri];
+            auto eax = state.GetRegister(RegisterIndex::EAX, RegisterLength::_32);
+            ArrayIndex->Emit(state, eax);
+            auto reg = state.AllocRegister(RegisterLength::_64);
             state.OutputStream << "\tcdqe" << endl
-                               << "\tlea " << trn64 << ", 0[0+rax*4]"           << endl
-                               << "\tlea rax, " << data->StackOffset << "[rbp]" << endl
-                               << "\tlea " << destinationRegister << ", [rax+" << trn64 << ']' << endl;
-            state.ReleaseRegister(tri);
+                               << "\tlea " << reg.Name() << ", 0[0+rax*4]"                         << endl
+                               << "\tlea rax, " << data->StackOffset << "[rbp]"                    << endl
+                               << "\tlea " << destination.Name() << ", [rax+" << reg.Name() << ']' << endl;
+            state.FreeRegister(reg);
             if (savedAx)
                 state.OutputStream << "\tpop rax" << endl;
         } else
         {
-            state.OutputStream << "\tlea " << destinationRegister << ", " << data->StackOffset << "[rbp]" << endl;
+            state.OutputStream << "\tlea " << destination.Name() << ", " << data->StackOffset << "[rbp]" << endl;
         }
     }
 }}

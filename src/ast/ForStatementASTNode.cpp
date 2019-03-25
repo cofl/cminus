@@ -15,7 +15,7 @@ namespace Cminus { namespace AST
         // nop
     }
 
-    ASTNode* ForStatementASTNode::Check(DriverState& state)
+    ASTNode* ForStatementASTNode::Check(State& state)
     {
         if(nullptr != Initial)
         {
@@ -41,19 +41,20 @@ namespace Cminus { namespace AST
         return this;
     }
 
-    void ForStatementASTNode::Emit(DriverState& state)
+    void ForStatementASTNode::Emit(State& state)
     {
-        int beginLabel = state.TemporaryLabelIndex;
-        int stepLabel = state.TemporaryLabelIndex + 1;
-        int afterLabel = state.TemporaryLabelIndex + 2;
-        state.TemporaryLabelIndex += 3;
+        int beginLabel = state.NextFreeLabel;
+        int stepLabel = state.NextFreeLabel + 1;
+        int afterLabel = state.NextFreeLabel + 2;
+        state.NextFreeLabel += 3;
         state.ContinueLabels.push_back(stepLabel);
         state.BreakLabels.push_back(afterLabel);
         if(nullptr != Initial)
             Initial->Emit(state);
         if(nullptr != Test)
         {
-            Test->Emit(state, "eax");
+            auto eax = state.GetRegister(RegisterIndex::EAX, RegisterLength::_32);
+            Test->Emit(state, eax);
             state.OutputStream << "\tcmp eax, 0"               << endl
                                << "\tje " << afterLabel << 'f' << endl
                                << beginLabel << ':'            << endl;
@@ -68,7 +69,8 @@ namespace Cminus { namespace AST
             Step->Emit(state);
         if(nullptr != Test)
         {
-            Test->Emit(state, "eax");
+            auto eax = state.GetRegister(RegisterIndex::EAX, RegisterLength::_32);
+            Test->Emit(state, eax);
             state.OutputStream << "\tcmp eax, 0"                << endl
                                << "\tjnz " << beginLabel << 'b' << endl
                                << afterLabel << ':'             << endl;

@@ -23,7 +23,7 @@ namespace Cminus { namespace AST
         // nop
     }
 
-    ASTNode* IfStatementASTNode::Check(DriverState& state)
+    ASTNode* IfStatementASTNode::Check(State& state)
     {
         Test->Symbols = this->Symbols;
         IfTrue->Symbols = this->Symbols;
@@ -37,27 +37,28 @@ namespace Cminus { namespace AST
         return this;
     }
 
-    void IfStatementASTNode::Emit(DriverState& state)
+    void IfStatementASTNode::Emit(State& state)
     {
-        int elseLabel = state.TemporaryLabelIndex;
-        state.TemporaryLabelIndex += 1;
-        Test->Emit(state, "eax");
+        int elseLabel = state.NextFreeLabel;
+        state.NextFreeLabel += 1;
+        auto eax = state.GetRegister(RegisterIndex::EAX, RegisterLength::_32);
+        Test->Emit(state, eax);
         state.OutputStream << "\tcmp eax, 0"              << endl
                            << "\tje " << elseLabel << 'f' << endl;
         IfTrue->Emit(state);
         if(IfFalse != nullptr)
         {
-            int afterLabel = state.TemporaryLabelIndex;
-            state.TemporaryLabelIndex += 1;
+            int afterLabel = state.NextFreeLabel;
+            state.NextFreeLabel += 1;
             state.OutputStream << "\tjmp " << afterLabel << 'f' << endl
                                << elseLabel << ':'              << endl;
             IfFalse->Emit(state);
             state.OutputStream << afterLabel << ':' << endl;
-            state.TemporaryLabelIndex -= 2;
+            state.NextFreeLabel -= 2;
         } else
         {
             state.OutputStream << elseLabel << ':' << endl;
-            state.TemporaryLabelIndex -= 1;
+            state.NextFreeLabel -= 1;
         }
     }
 }}

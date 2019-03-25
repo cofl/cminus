@@ -13,7 +13,7 @@ namespace Cminus { namespace AST
         // nop
     }
 
-    void ASMASTNode::Emit(DriverState& state)
+    void ASMASTNode::Emit(State& state)
     {
         smatch rgxMatch;
         regex varExpr("\\$([a-zA-Z_][a-zA-Z0-9_]*)");

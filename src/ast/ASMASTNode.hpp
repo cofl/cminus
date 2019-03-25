@@ -2,8 +2,6 @@
     #define ASMASTNode_HPP
 
 #include "ASTNode.hpp"
-#include "../structures/SymbolTable.hpp"
-#include "../DriverState.hpp"
 #include <string>
 
 namespace Cminus { namespace AST
@@ -14,7 +12,7 @@ namespace Cminus { namespace AST
             ASMASTNode(string value);
             string Value;
 
-            void Emit(DriverState& state);
+            void Emit(State& state);
     };
 }}
 

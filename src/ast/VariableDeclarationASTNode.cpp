@@ -27,7 +27,7 @@ namespace Cminus { namespace AST
         // nop
     }
 
-    ASTNode* VariableDeclarationASTNode::Check(DriverState& state)
+    ASTNode* VariableDeclarationASTNode::Check(State& state)
     {
         auto scope = state.SymbolStack.back();
         int len = Members.size();
@@ -43,7 +43,7 @@ namespace Cminus { namespace AST
         return this;
     }
 
-    void VariableDeclarationASTNode::Emit(DriverState& state)
+    void VariableDeclarationASTNode::Emit(State& state)
     {
         // TODO?
     }

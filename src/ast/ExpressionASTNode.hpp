@@ -2,8 +2,6 @@
     #define ExpressionASTNode_HPP
 
 #include "ASTNode.hpp"
-#include "../structures/SymbolTable.hpp"
-#include "../DriverState.hpp"
 
 namespace Cminus { namespace AST
 {
@@ -16,9 +14,9 @@ namespace Cminus { namespace AST
             bool IsLValue;
             bool IsConstant;
 
-            void Emit(DriverState& state);
-            virtual void Emit(DriverState& state, const char* destinationRegister);
-            virtual void EmitLValue(DriverState& state, const char* destinationRegister);
+            void Emit(State& state);
+            virtual void Emit(State& state, Register& destination);
+            virtual void EmitLValue(State& state, Register& destination);
     };
 }}
 

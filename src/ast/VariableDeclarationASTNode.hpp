@@ -3,8 +3,6 @@
 
 #include "ASTNode.hpp"
 #include "ExpressionASTNode.hpp"
-#include "../structures/SymbolTable.hpp"
-#include "../DriverState.hpp"
 #include <string>
 
 namespace Cminus { namespace AST
@@ -18,7 +16,7 @@ namespace Cminus { namespace AST
             ExpressionASTNode* InitialValue;
             int ArraySize;
 
-            void Emit(DriverState& state);
+            void Emit(State& state);
     };
 
     class VariableDeclarationASTNode : public ASTNode
@@ -28,8 +26,8 @@ namespace Cminus { namespace AST
             int Type;
             std::vector<SingleVariableDeclarationASTNode*> Members;
 
-            ASTNode* Check(DriverState& state);
-            void Emit(DriverState& state);
+            ASTNode* Check(State& state);
+            void Emit(State& state);
     };
 }}
 

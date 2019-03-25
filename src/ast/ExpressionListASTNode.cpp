@@ -11,7 +11,7 @@ namespace Cminus { namespace AST
         // nop
     }
 
-    ASTNode* ExpressionListASTNode::Check(DriverState& state)
+    ASTNode* ExpressionListASTNode::Check(State& state)
     {
         int len = Members.size();
         for(int i = 0; i < len; i += 1)
@@ -24,9 +24,9 @@ namespace Cminus { namespace AST
         return this;
     }
 
-    void ExpressionListASTNode::Emit(DriverState& state, const char* destinationRegister)
+    void ExpressionListASTNode::Emit(State& state, Register& destination)
     {
         for(auto const& member: Members)
-            member->Emit(state, destinationRegister);
+            member->Emit(state, destination);
     }
 }}

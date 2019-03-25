@@ -149,6 +149,7 @@ for file in $TEST_FILES; do
                 printf "[FAIL] $file_basename [$relative_in_file] ($file_dirname)\n"
                 printf "\tReturn codes did not match: expected \"%d\", saw \"%d\" \n" "$expected_return" "$actual_return"
                 let FAILED+=1
+                continue
             fi
             test_diff=$(diff -u <(echo "$expected_text") <(echo "$actual_text"))
             if [ -z "$test_diff" ]; then
@@ -170,6 +171,7 @@ for file in $TEST_FILES; do
             printf "[FAIL] $file_basename ($file_dirname)\n"
             printf "\tReturn codes did not match: expected \"%d\", saw \"%d\" \n" "$expected_return" "$actual_return"
             let FAILED+=1
+            continue
         fi
         test_diff=$(diff -u <(echo "$expected_text") <(echo "$actual_text"))
         if [ -z "$test_diff" ]; then

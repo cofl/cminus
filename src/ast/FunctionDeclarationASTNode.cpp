@@ -22,7 +22,7 @@ namespace Cminus { namespace AST
         // nop
     }
 
-    ASTNode* FunctionDeclarationASTNode::Check(DriverState& state)
+    ASTNode* FunctionDeclarationASTNode::Check(State& state)
     {
         auto scope = state.SymbolStack.back();
         Symbols = new SymbolTable(scope);
@@ -50,7 +50,7 @@ namespace Cminus { namespace AST
         return this;
     }
 
-    void FunctionDeclarationASTNode::Emit(DriverState& state)
+    void FunctionDeclarationASTNode::Emit(State& state)
     {
         int prevBaseOffset = state.BaseOffset;
         state.BaseOffset = 0;

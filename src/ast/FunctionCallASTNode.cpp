@@ -20,13 +20,13 @@ namespace Cminus { namespace AST
         Arguments = args->Members;
     }
 
-    ASTNode* FunctionCallASTNode::Check(DriverState& state)
+    ASTNode* FunctionCallASTNode::Check(State& state)
     {
         auto data = Symbols->FindFunction(this->ID);
         if(data == nullptr)
         {
             // if we haven't declared it, assume it's in the standard library.
-            this->Type = state.GetTypeID("int");
+            this->Type = state.GetTypeID("int"); // TODO
             this->ID = this->ID.append("@PLT");
         } else
         {
@@ -43,41 +43,58 @@ namespace Cminus { namespace AST
         return this;
     }
 
-    void FunctionCallASTNode::Emit(DriverState& state, const char* destinationRegister)
+    void FunctionCallASTNode::Emit(State& state, Register& destination)
     {
-        bool usingEax = state.GetRegisterID(destinationRegister) == state.GetRegisterID("eax");
-        state.SaveRegisters(6, "rdi", "rsi", "rdx", "rcx", "r8", "r9");
+        state.SaveRegisters(6, RegisterIndex::RDI, RegisterIndex::RSI, RegisterIndex::RDX,
+            RegisterIndex::RCX, RegisterIndex::R9, RegisterIndex::R9);
         int argc = Arguments.size();
         if(argc > 0)
-            Arguments[0]->Emit(state, "edi");
+        {
+            auto edi = state.GetRegister(RegisterIndex::EDI, RegisterLength::_32);
+            Arguments[0]->Emit(state, edi);
+        }
         if (argc > 1)
-            Arguments[1]->Emit(state, "esi");
+        {
+            auto esi = state.GetRegister(RegisterIndex::ESI, RegisterLength::_32);
+            Arguments[1]->Emit(state, esi);
+        }
         if (argc > 2)
-            Arguments[2]->Emit(state, "edx");
+        {
+            auto edx = state.GetRegister(RegisterIndex::EDX, RegisterLength::_32);
+            Arguments[2]->Emit(state, edx);
+        }
         if (argc > 3)
-            Arguments[3]->Emit(state, "ecx");
+        {
+            auto ecx = state.GetRegister(RegisterIndex::ECX, RegisterLength::_32);
+            Arguments[3]->Emit(state, ecx);
+        }
         if (argc > 4)
-            Arguments[4]->Emit(state, "r8d");
+        {
+            auto r8d = state.GetRegister(RegisterIndex::R8D, RegisterLength::_32);
+            Arguments[4]->Emit(state, r8d);
+        }
         if (argc > 5)
-            Arguments[5]->Emit(state, "r9d");
+        {
+            auto r9d = state.GetRegister(RegisterIndex::R9D, RegisterLength::_32);
+            Arguments[5]->Emit(state, r9d);
+        }
         if (argc > 6)
         {
             int t = 4 * (argc - 6);
             t += 16 - (t % 16);
             state.OutputStream << "\tsub rsp," << t << endl;
-            auto tri = state.GetFreeRegister();
-            auto trn = state.RegisterNames32[tri];
+            auto reg = state.AllocRegister(RegisterLength::_32);
             for(int i = 6, j = 0; i < argc; i += 1, j += 1)
             {
-                Arguments[i]->Emit(state, trn);
-                state.OutputStream << "\tmov " << j << "[rsp]," << trn << endl;
+                Arguments[i]->Emit(state, reg);
+                state.OutputStream << "\tmov " << j << "[rsp]," << reg.Name() << endl;
             }
-            state.ReleaseRegister(tri);
+            state.FreeRegister(reg);
         }
         state.OutputStream << "\tmov eax, 0"  << endl
                            << "\tcall " << ID << endl;
-        if(!usingEax)
-            state.OutputStream << "\tmov " << destinationRegister << ", eax" << endl;
+        if(destination.Index != RegisterIndex::EAX)
+            state.OutputStream << "\tmov " << destination.Name() << ", eax" << endl;
         state.RestoreRegisters();
     }
 }}

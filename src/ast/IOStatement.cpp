@@ -19,51 +19,60 @@ namespace Cminus { namespace AST
         // nop
     }
 
-    ASTNode* ReadCallASTNode::Check(DriverState& state)
+    ASTNode* ReadCallASTNode::Check(State& state)
     {
         Variable->Symbols = this->Symbols;
         Variable = (ExpressionASTNode*) Variable->Check(state);
         return this;
     }
 
-    ASTNode* WriteCallASTNode::Check(DriverState& state)
+    ASTNode* WriteCallASTNode::Check(State& state)
     {
         Value->Symbols = this->Symbols;
         Value = (ExpressionASTNode*) Value->Check(state);
         return this;
     }
 
-    void ReadCallASTNode::Emit(DriverState& state)
+    void ReadCallASTNode::Emit(State& state)
     {
-        auto rsii = state.GetRegisterID("rsi");
-        state.FreeRegisters[rsii] = false; // manually reserve register
-        Variable->EmitLValue(state, "rsi");
+        Register reg;
+        if(!state.AllocRegister(RegisterIndex::RSI, RegisterLength::_64, reg))
+        {
+            throw "Register RSI already in use!";
+        }
+        Variable->EmitLValue(state, reg);
         state.OutputStream << "\tlea rdi, .int_rformat[rip]" << endl
                            << "\tmov eax, 0"                 << endl
                            << "\tcall scanf@PLT"             << endl;
-        state.ReleaseRegister(rsii);
+        state.FreeRegister(reg);
     }
 
-    void WriteCallASTNode::Emit(DriverState& state)
+    void WriteCallASTNode::Emit(State& state)
     {
         if(Value->Type == state.GetTypeID("string"))
         {
             // emit string write
-            auto rdii = state.GetRegisterID("rdi");
-            state.FreeRegisters[rdii] = false; // manually reserve register
-            Value->Emit(state, "rdi");
+            Register rdi;
+            if(!state.AllocRegister(RegisterIndex::RDI, RegisterLength::_64, rdi))
+            {
+                throw "Register RDI already in use!";
+            }
+            Value->Emit(state, rdi);
             state.OutputStream << "\tcall puts@PLT" << endl; // mildly more efficient than printf
-            state.ReleaseRegister(rdii);
+            state.FreeRegister(rdi);
         } else
         {
             // emit value generation, then value write
-            auto esii = state.GetRegisterID("esi");
-            state.FreeRegisters[esii] = false; // manually reserve register
-            Value->Emit(state, "esi");
+            Register esi;
+            if(!state.AllocRegister(RegisterIndex::ESI, RegisterLength::_32, esi))
+            {
+                throw "Register ESI already in use!";
+            }
+            Value->Emit(state, esi);
             state.OutputStream << "\tlea rdi, .int_wformat[rip]" << endl
                                << "\tmov eax, 0"                 << endl
                                << "\tcall printf@PLT"            << endl;
-            state.ReleaseRegister(esii);
+            state.FreeRegister(esi);
         }
     }
 }}

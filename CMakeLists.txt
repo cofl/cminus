@@ -25,6 +25,7 @@ FLEX_TARGET(CminusScanner src/CminusScanner.l ${CMAKE_CURRENT_BINARY_DIR}/Cminus
 ADD_FLEX_BISON_DEPENDENCY(CminusScanner CminusParser)
 
 FILE(GLOB AST_SOURCES src/ast/*.cpp)
+FILE(GLOB ASM_SOURCES src/asm/*.cpp)
 
 include_directories(${CMAKE_SOURCE_DIR}/src ${CMAKE_CURRENT_BINARY_DIR} /usr/include)
 
@@ -33,5 +34,7 @@ add_executable(${TARGET}
     "src/main.cpp"
     "src/CminusDriver.cpp"
     "src/structures/SymbolTable.cpp"
+    "src/state/State.cpp"
     ${AST_SOURCES}
+    ${ASM_SOURCES}
     ${BISON_CminusParser_OUTPUTS} ${FLEX_CminusScanner_OUTPUTS})

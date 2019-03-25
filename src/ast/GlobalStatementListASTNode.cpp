@@ -1,4 +1,5 @@
 #include "GlobalStatementListASTNode.hpp"
+#include "../asm/ASM.hpp"
 #include <iostream>
 #include <sys/utsname.h>
 
@@ -13,11 +14,13 @@ namespace Cminus { namespace AST
         // nop
     }
 
-    void GlobalStatementListASTNode::Emit(DriverState& state)
+    void GlobalStatementListASTNode::Emit(State& state)
     {
-        state.OutputStream << "\t.file \"" << *(state.FileName) << "\"" << endl
-                            << "\t.intel_syntax noprefix /* I have to be difficult because I like to read */" << endl
-                            << "\t.text"             << endl;
+        ASM::Verbatim    (state, "\t.file ");
+        ASM::EncodeString(state, state.FileName);
+        ASM::EndLine     (state);
+        ASM::VerbatimLine(state, "\t.intel_syntax noprefix");
+        ASM::VerbatimLine(state, "\t.text");
         for(auto it = Symbols->Variables.begin(); it != Symbols->Variables.end(); it++)
         {
             auto name = it->first;
@@ -31,55 +34,31 @@ namespace Cminus { namespace AST
             }
             // TODO: emit constant code
         }
-        state.OutputStream << "\t.section .rodata"  << endl
-                            << ".int_wformat:"       << endl
-                            << "\t.string \"%d\\n\"" << endl
-                            << ".int_rformat:"       << endl
-                            << "\t.string \"%d\""    << endl;
-        for(int i = 0; i < state.StringConstants.size(); i += 1)
+        ASM::VerbatimLine(state, "\t.section .rodata");
+        ASM::Label       (state, ".int_wformat");
+        ASM::VerbatimLine(state, "\t.string \"%d\\n\"");
+        ASM::Label       (state, ".int_rformat");
+        ASM::VerbatimLine(state, "\t.string \"%d\"");
+        for(auto it = state.StringLiterals.begin(); it != state.StringLiterals.end(); it++)
         {
-            state.OutputStream << ".string_constant" << i << ":" << endl
-                                << "\t.string \"";
-            auto string = state.StringConstants[i];
-            auto length = string.length();
-            for(int i = 0; i < length; i += 1)
-            {
-                auto chr = string[i];
-                switch(chr)
-                {
-                    case '\b': state.OutputStream << "\\b"; break;
-                    case '\f': state.OutputStream << "\\f"; break;
-                    case '\n': state.OutputStream << "\\n"; break;
-                    case '\r': state.OutputStream << "\\r"; break;
-                    case '\t': state.OutputStream << "\\t"; break;
-                    case '\\': state.OutputStream << "\\\\"; break;
-                    case '\"': state.OutputStream << "\\\""; break;
-                    default:
-                        if(chr >= ' ' && chr <= '~' && chr != '\\' && chr != '\"')
-                        {
-                            state.OutputStream << chr;
-                        } else
-                        {
-                            char upper = (chr & 0xF0) >> 4;
-                            char lower = chr & 0x0F;
-                            state.OutputStream << "\\x"
-                                                << (upper > 9 ? upper + 'A' : upper + '0')
-                                                << (lower > 9 ? lower + 'A' : lower + '0');
-                        }
-                        break;
-                }
-            }
-            state.OutputStream << "\"" << endl;
+            ASM::Label   (state, it->first);
+            ASM::Verbatim(state, "\t.string ");
+            ASM::EncodeString(state, it->second);
+            ASM::EndLine (state);
         }
-        state.OutputStream << "\t.text" << endl;
+        ASM::VerbatimLine(state, "\t.text");
         for(auto const& member: Members)
             member->Emit(state);
         utsname uts;
         uname(&uts);
-        state.OutputStream << "\t.ident \"cllacour-CMC: ("
-                            << uts.sysname << "~" << uts.release
-                            << ") 0.0.3\"" << endl;
-        // GCC thinks this is a good idea, and so does the internet
-        state.OutputStream << "\t.section\t.note.GNU-stack,\"\",@progbits" << endl;
+        ASM::Verbatim(state, "\t.ident \"cllacour-CMC: (");
+        ASM::Verbatim(state, uts.sysname);
+        ASM::Verbatim(state, "~");
+        ASM::Verbatim(state, uts.release);
+        ASM::Verbatim(state, ") 0.0.4\"");
+        ASM::EndLine (state);
+
+        // GCC thinks this is a good idea, and so does the Internet
+        ASM::VerbatimLine(state, "\t.section\t.note.GNU-stack,\"\",@progbits");
     }
 }}
