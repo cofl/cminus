@@ -53,12 +53,9 @@ namespace Cminus { namespace ASM
     void Move(State& state, Register& dest, Register& src);
     void Move(State& state, Register& dest, int value);
     void Operation(State& state, const string& operation, Register& dest);
-    void Operation(State& state, const string& operation, Register& dest, Register& src); //deprecated
     void Operation(State& state, const string& operation, Register& dest, Source& src);
     void CmpAndSet(State& state, const string& setOperation, Register& dest);
-    void CmpAndSet(State& state, const string& setOperation, Register& dest, Register& src); // deprecated
     void CmpAndSet(State& state, const string& setOperation, Register& dest, Source& src);
-    void TestAndSet(State& state, const string& setOperation, Register& dest, Register& src); // deprecated
     void TestAndSet(State& state, const string& setOperation, Register& dest, Source& src);
 
     void IncreaseStack(State& state, int size);

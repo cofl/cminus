@@ -26,13 +26,24 @@ namespace Cminus { namespace ASM
                 }
             default:
                 Type = SourceType::Register;
-                _Register = _State.AllocRegister(RegisterLength::_32);
-                Member->Emit(_State, _Register);
                 break;
         }
     }
 
-    Source::~Source()
+    void Source::Prepare()
+    {
+        switch(Type)
+        {
+            case SourceType::Register:
+                _Register = _State.AllocRegister(RegisterLength::_32);
+                Member->Emit(_State, _Register);
+                break;
+            default:
+                break;
+        }
+    }
+
+    void Source::Cleanup()
     {
         switch(Type)
         {

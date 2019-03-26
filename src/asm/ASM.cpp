@@ -205,14 +205,11 @@ namespace Cminus { namespace ASM
         state.OutputStream << "\t" << operation << ' ' << dest << endl;
     }
 
-    void Operation(State& state, const string& operation, Register& dest, Register& src)
-    {
-        state.OutputStream << "\t" << operation << ' ' << dest << ", " << src << endl;
-    }
-
     void Operation(State& state, const string& operation, Register& dest, Source& src)
     {
+        src.Prepare();
         state.OutputStream << "\t" << operation << ' ' << dest << ", " << src << endl;
+        src.Cleanup();
     }
 
     void CmpAndSet(State& state, const string& setOperation, Register& dest)
@@ -223,36 +220,24 @@ namespace Cminus { namespace ASM
                            << "\tmovzx " << dest << ", "  << byteName << endl;
     }
 
-    void CmpAndSet(State& state, const string& setOperation, Register& dest, Register& src)
-    {
-        auto byteName = dest.Name(RegisterLength::_8);
-        state.OutputStream << "\tcmp " << dest << ", " << src         << endl
-                           << "\t" << setOperation << ' ' << byteName << endl
-                           << "\tmovzx " << dest << ", "  << byteName << endl;
-    }
-
     void CmpAndSet(State& state, const string& setOperation, Register& dest, Source& src)
     {
+        src.Prepare();
         auto byteName = dest.Name(RegisterLength::_8);
         state.OutputStream << "\tcmp " << dest << ", " << src         << endl
                            << "\t" << setOperation << ' ' << byteName << endl
                            << "\tmovzx " << dest << ", "  << byteName << endl;
-    }
-
-    void TestAndSet(State& state, const string& setOperation, Register& dest, Register& src)
-    {
-        auto byteName = dest.Name(RegisterLength::_8);
-        state.OutputStream << "\ttest " << dest << ", " << src        << endl
-                           << "\t" << setOperation << ' ' << byteName << endl
-                           << "\tmovzx " << dest << ", "  << byteName << endl;
+        src.Cleanup();
     }
 
     void TestAndSet(State& state, const string& setOperation, Register& dest, Source& src)
     {
+        src.Prepare();
         auto byteName = dest.Name(RegisterLength::_8);
         state.OutputStream << "\ttest " << dest << ", " << src        << endl
                            << "\t" << setOperation << ' ' << byteName << endl
                            << "\tmovzx " << dest << ", "  << byteName << endl;
+        src.Cleanup();
     }
 
     void IncreaseStack(State& state, int size)

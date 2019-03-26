@@ -131,6 +131,5 @@ namespace Cminus { namespace AST
             default:
                 state.OutputStream << "{{unrecognized binary operation}}" << endl;
         }
-        source.~Source();
     }
 }}
