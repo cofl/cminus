@@ -37,6 +37,7 @@ namespace Cminus
             void SetRegisterStatus(Register& in, bool value);
             void FreeRegister(Register& in);
             void SaveRegisters(int count, ...);
+            void SaveRegisters(Register& except, int count, ...);
             void RestoreRegisters();
         private:
             bool RegisterIsFree[14];

@@ -46,10 +46,9 @@ namespace Cminus { namespace AST
 
     void FunctionCallASTNode::Emit(State& state, Register& destination)
     {
-        state.SaveRegisters(6, RegisterIndex::RDI, RegisterIndex::RSI, RegisterIndex::RDX,
+        state.SaveRegisters(destination, 7, RegisterIndex::RAX,
+            RegisterIndex::RDI, RegisterIndex::RSI, RegisterIndex::RDX,
             RegisterIndex::RCX, RegisterIndex::R9, RegisterIndex::R9);
-        if (destination.Index != RegisterIndex::EAX)
-            state.SaveRegisters(1, RegisterIndex::EAX);
         int argc = Arguments.size();
         vector<Register> used_registers;
         if(argc > 0)
@@ -124,10 +123,7 @@ namespace Cminus { namespace AST
         ASM::Zero(state, eax);
         ASM::Call(state, ID);
         if (destination.Index != RegisterIndex::EAX)
-        {
             ASM::Move(state, destination, eax);
-            state.RestoreRegisters();
-        }
         for (auto&& r: used_registers)
             state.FreeRegister(r);
         state.RestoreRegisters();

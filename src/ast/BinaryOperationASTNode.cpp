@@ -45,28 +45,18 @@ namespace Cminus { namespace AST
             {
                 auto eax = Register::Get(RegisterIndex::EAX);
                 auto edx = Register::Get(RegisterIndex::EDX);
-
-                // manually reserve edx if it isn't already
-                auto edxs = state.RegisterStatus(edx);
-                state.SetRegisterStatus(edx, false);
-
                 bool allocatedEAX = false;
 
                 if(destination.Index == RegisterIndex::EAX)
                 {
                     LeftSide->Emit(state, destination);
                     state.SaveRegisters(1, RegisterIndex::RDX);
-                } else if(destination.Index == RegisterIndex::EDX)
-                {
-                    state.SaveRegisters(1, RegisterIndex::RAX);
-                    if(!state.AllocRegister(RegisterIndex::EAX, RegisterLength::_32, eax))
-                        throw "Register EAX already allocated!";
-                    else
-                        allocatedEAX = true;
-                    LeftSide->Emit(state, eax);
                 } else
                 {
-                    state.SaveRegisters(2, RegisterIndex::RAX, RegisterIndex::RDX);
+                    if(destination.Index == RegisterIndex::EDX)
+                        state.SaveRegisters(1, RegisterIndex::RAX);
+                    else
+                        state.SaveRegisters(2, RegisterIndex::RAX, RegisterIndex::RDX);
                     if(!state.AllocRegister(RegisterIndex::EAX, RegisterLength::_32, eax))
                         throw "Register EAX already allocated!";
                     else
@@ -74,7 +64,11 @@ namespace Cminus { namespace AST
                     LeftSide->Emit(state, eax);
                 }
 
+                // manually reserve edx if it isn't already
+                auto edxs = state.RegisterStatus(edx);
+                state.SetRegisterStatus(edx, false);
                 ASM::Zero(state, edx);
+
                 auto rsr = state.AllocRegister(RegisterLength::_32);
                 RightSide->Emit(state, rsr);
                 ASM::Operation(state, "idiv", rsr);

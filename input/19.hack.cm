@@ -1,0 +1,17 @@
+int x;
+
+int t()
+{
+  int a[4];
+
+  x = foo();
+  read(a[6]);
+  read(a[7]);
+  return x;
+}
+
+int main()
+{
+  x = t();
+  write("You should not reach here");
+}

@@ -55,12 +55,12 @@ namespace Cminus
 
     bool State::RegisterStatus(Register& in)
     {
-        return RegisterIsFree[(int) in.Length];
+        return RegisterIsFree[(int) in.Index];
     }
 
     void State::SetRegisterStatus(Register& in, bool value)
     {
-        RegisterIsFree[(int) in.Length] = value;
+        RegisterIsFree[(int) in.Index] = value;
     }
 
     void State::FreeRegister(Register& in)
@@ -76,6 +76,27 @@ namespace Cminus
         for(;count > 0; count -= 1)
         {
             auto regi = va_arg(args, RegisterIndex);
+            auto reg = Register::Get(regi, RegisterLength::_64);
+            if(!RegisterIsFree[(int) regi])
+            {
+                saved.push_back(regi);
+                OutputStream << "\tpush " << reg.Name() << endl;
+                RegisterIsFree[(int) regi] = true;
+            }
+        }
+        SavedRegisters.push_back(saved);
+    }
+
+    void State::SaveRegisters(Register& except, int count, ...)
+    {
+        vector<RegisterIndex> saved;
+        va_list args;
+        va_start(args, count);
+        for(;count > 0; count -= 1)
+        {
+            auto regi = va_arg(args, RegisterIndex);
+            if(except.Index == regi)
+                continue;
             auto reg = Register::Get(regi, RegisterLength::_64);
             if(!RegisterIsFree[(int) regi])
             {

@@ -67,6 +67,7 @@ namespace Cminus { namespace ASM
         if(nullptr != variable->ArrayIndex)
             throw "ASM::Variable only supports variables without array indices.";
         auto data = variable->Symbols->FindVariable(variable->ID);
+        stream << "DWORD PTR ";
         if(data->IsGlobal)
         {
             stream << data->GlobalLocation << "[rip]";

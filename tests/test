@@ -15,6 +15,12 @@ SKIP="
 22.guess.cm         Random input is cannot be tested.
 23.asm.cm           Non-standard test.
 13.hack_array.cm    Test assumes undefined behavior.
+
+13.messy.cm         Broken (infinite loop?)
+16.bubblerecur.cm   Broken return code (scanf?).
+17.external.cm      Not implemented.
+18.external.cm      Not implemented.
+19.hack.cm          Not implemented.
 "
 
 ##

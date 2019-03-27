@@ -9,9 +9,9 @@ namespace Cminus { namespace ASM
         // TODO
     }
 
-    Destination::Destination(State& state, ExpressionASTNode* expression)
+    Destination::Destination(State& state, Register& _register)
         :   _State(state),
-            Member(expression)
+            Member(nullptr)
     {
         // TODO
     }

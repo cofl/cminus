@@ -1,0 +1,7 @@
+int a;
+
+int main()
+{
+  a = sum100();
+  write(a);
+}

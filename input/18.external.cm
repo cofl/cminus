@@ -1,0 +1,14 @@
+int a;
+
+int main()
+{
+  int b;
+
+  b = 0;
+  write("input #iterations:");
+  read(a);
+  while (b<a) {
+    write(sumI());
+    b = b+1;
+  }
+}
