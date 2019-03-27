@@ -1,4 +1,6 @@
 #include "Destination.hpp"
+#include <iostream>
+#include "../ast/VariableASTNode.hpp"
 
 namespace Cminus { namespace ASM
 {
@@ -6,24 +8,55 @@ namespace Cminus { namespace ASM
         :   _State(state),
             Member(expression)
     {
-        // TODO
+        switch(expression->NodeType)
+        {
+            case ASTNodeType::IntegerLiteral:
+                Type = LocationType::Literal;
+                break;
+            case ASTNodeType::Variable:
+                if(nullptr == ((VariableASTNode*) Member)->ArrayIndex)
+                {
+                    Type = LocationType::Memory;
+                    break;
+                }
+            default:
+                Type = LocationType::Register;
+                break;
+        }
     }
 
     Destination::Destination(State& state, Register& _register)
         :   _State(state),
-            Member(nullptr)
+            Member(nullptr),
+            _Register(_register),
+            Type(LocationType::BoundRegister)
     {
-        // TODO
+        // nop
     }
 
     void Destination::Prepare()
     {
-        // TODO
+        switch(Type)
+        {
+            case LocationType::Register:
+                _Register = _State.AllocRegister(RegisterLength::_32);
+                Member->Emit(_State, _Register);
+                break;
+            default:
+                break;
+        }
     }
 
     void Destination::Cleanup()
     {
-        // TODO
+        switch(Type)
+        {
+            case LocationType::Register:
+                _State.FreeRegister(_Register);
+                break;
+            default:
+                break;
+        }
     }
 
     ostream& operator<<(ostream& out, Destination& dest)

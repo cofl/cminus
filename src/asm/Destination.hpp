@@ -4,17 +4,11 @@
 #include <iostream>
 #include "../state/State.hpp"
 #include "../ast/ExpressionASTNode.hpp"
+#include "Location.hpp"
 
 namespace Cminus { namespace ASM
 {
     using namespace AST;
-
-    enum class DestinationType
-    {
-        Register = 0,
-        Literal = 1,
-        Memory = 2
-    };
 
     class Destination
     {
@@ -28,7 +22,7 @@ namespace Cminus { namespace ASM
         private:
             State& _State;
             ExpressionASTNode* Member;
-            DestinationType Type;
+            LocationType Type;
             Register _Register;
         // TODO
     };
