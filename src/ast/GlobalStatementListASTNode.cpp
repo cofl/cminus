@@ -55,7 +55,7 @@ namespace Cminus { namespace AST
         ASM::Verbatim(state, uts.sysname);
         ASM::Verbatim(state, "~");
         ASM::Verbatim(state, uts.release);
-        ASM::Verbatim(state, ") 0.0.4\"");
+        ASM::Verbatim(state, ") 0.0.5\"");
         ASM::EndLine (state);
 
         // GCC thinks this is a good idea, and so does the Internet

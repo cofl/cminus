@@ -89,6 +89,11 @@ namespace Cminus { namespace ASM
         }
     }
 
+    void Variable(ostream& stream, Register& dest)
+    {
+        stream << "DWORD PTR [" << dest << "]";
+    }
+
     void EncodeString(State& state, string& value)
     {
         state.OutputStream << '"';
@@ -183,6 +188,13 @@ namespace Cminus { namespace ASM
         state.OutputStream << "\tmov [" << dest.Name(RegisterLength::_64) << "], " << src << endl;
     }
 
+    void Store(State& state, Destination& dest, Register& src)
+    {
+        dest.Prepare();
+        state.OutputStream << "\tmov " << dest << ", " << src << endl;
+        dest.Cleanup();
+    }
+
     void LoadGlobalAddress(State& state, Register& dest, const string& labelName)
     {
         state.OutputStream << "\tlea " << dest.Name(RegisterLength::_64) << ", " << labelName << "[rip]" << endl;
@@ -268,7 +280,7 @@ namespace Cminus { namespace ASM
     void AlignStack(State& state)
     {
         int t = state.GetStackOffset();
-        t = 16 - (t % 16);
+        t = (16 - (t % 16)) % 16;
         state.StackOffset.push_back(t);
         if (t > 0)
             state.OutputStream << "\tsub rsp, " << t << endl;

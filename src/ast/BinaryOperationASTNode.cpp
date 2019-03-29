@@ -1,6 +1,7 @@
 #include "BinaryOperationASTNode.hpp"
 #include "../asm/ASM.hpp"
 #include "../asm/Source.hpp"
+#include "../asm/Destination.hpp"
 #include <iostream>
 
 namespace Cminus { namespace AST
@@ -35,10 +36,8 @@ namespace Cminus { namespace AST
             {
                 //TODO: check if lvalue
                 RightSide->Emit(state, destination);
-                auto lsr = state.AllocRegister(RegisterLength::_64);
-                LeftSide->EmitLValue(state, lsr);
-                ASM::Store(state, lsr, destination);
-                state.FreeRegister(lsr);
+                Destination dest(state, LeftSide);
+                ASM::Store(state, dest, destination);
             }   return;
             case ASTOperationType::Divide:
             case ASTOperationType::Modulo:

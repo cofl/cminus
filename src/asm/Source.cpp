@@ -16,27 +16,47 @@ namespace Cminus { namespace ASM
         switch(expression->NodeType)
         {
             case ASTNodeType::IntegerLiteral:
-                Type = SourceType::Literal;
+                Type = LocationType::Literal;
                 break;
             case ASTNodeType::Variable:
                 if(nullptr == ((VariableASTNode*) Member)->ArrayIndex)
                 {
-                    Type = SourceType::Memory;
+                    Type = LocationType::Memory;
                     break;
                 }
             default:
-                Type = SourceType::Register;
+                Type = LocationType::Register;
                 break;
         }
+    }
+
+    Source::Source(State& state, Register& _register)
+        :   _State(state),
+            Member(nullptr),
+            _Register(_register),
+            Type(LocationType::BoundRegister)
+    {
+        // nop
+    }
+
+    Source::Source(State& state, ExpressionASTNode* expression, Register& _register)
+        :   _State(state),
+            Member(expression),
+            _Register(_register),
+            Type(LocationType::BoundRegister)
+    {
+        // nop
     }
 
     void Source::Prepare()
     {
         switch(Type)
         {
-            case SourceType::Register:
+            case LocationType::Register:
                 _Register = _State.AllocRegister(RegisterLength::_32);
-                Member->Emit(_State, _Register);
+            case LocationType::BoundRegister:
+                if (nullptr != Member)
+                    Member->Emit(_State, _Register);
                 break;
             default:
                 break;
@@ -47,7 +67,7 @@ namespace Cminus { namespace ASM
     {
         switch(Type)
         {
-            case SourceType::Register:
+            case LocationType::Register:
                 _State.FreeRegister(_Register);
                 break;
             default:
@@ -59,13 +79,14 @@ namespace Cminus { namespace ASM
     {
         switch(src.Type)
         {
-            case SourceType::Literal:
+            case LocationType::Literal:
                 ASM::Verbatim(out, ((IntegerLiteralASTNode*) src.Member)->Value);
                 break;
-            case SourceType::Memory:
+            case LocationType::Memory:
                 ASM::Variable(out, (VariableASTNode*) src.Member);
                 break;
-            case SourceType::Register:
+            case LocationType::BoundRegister:
+            case LocationType::Register:
                 ASM::Verbatim(out, src._Register);
                 break;
             default:

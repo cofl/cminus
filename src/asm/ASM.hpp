@@ -6,6 +6,7 @@
 #include "../ast/VariableASTNode.hpp"
 #include "Register.hpp"
 #include "Source.hpp"
+#include "Destination.hpp"
 #include <string>
 
 namespace Cminus { namespace ASM
@@ -33,6 +34,7 @@ namespace Cminus { namespace ASM
 
     void Variable(State& state, VariableASTNode* variable);
     void Variable(ostream& stream, VariableASTNode* variable);
+    void Variable(ostream& stream, Register& dest);
     void EncodeString(State& state, string& value);
 
     void Verbatim(State& state, string& line);
@@ -48,6 +50,7 @@ namespace Cminus { namespace ASM
     void Store(State& state, int stackOffset, Register& src);
     void Store(State& state, int stackOffset, const string& base, Register& src);
     void Store(State& state, Register& dest, Register& src);
+    void Store(State& state, Destination& dest, Register& src);
     void Load(State& state, Register& dest, string& globalName);
     void Load(State& state, Register& dest, int stackOffset);
     void LoadGlobalAddress(State& state, Register& dest, const string& labelName);
