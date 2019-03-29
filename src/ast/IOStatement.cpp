@@ -37,6 +37,7 @@ namespace Cminus { namespace AST
     void ReadCallASTNode::Emit(State& state)
     {
         Register reg, rdi, eax;
+        ASM::AlignStack(state);
         if(!state.AllocRegister(RegisterIndex::RSI, RegisterLength::_64, reg))
             throw "Register RSI already allocated!";
         Variable->EmitLValue(state, reg);
@@ -47,6 +48,7 @@ namespace Cminus { namespace AST
             throw "Register EAX already allocated!";
         ASM::Zero(state, eax);
         ASM::Call(state, "scanf@PLT");
+        ASM::UnalignStack(state);
         state.FreeRegister(reg);
         state.FreeRegister(rdi);
         state.FreeRegister(eax);
@@ -54,6 +56,7 @@ namespace Cminus { namespace AST
 
     void WriteCallASTNode::Emit(State& state)
     {
+        ASM::AlignStack(state);
         if(Value->Type == state.GetTypeID("string"))
         {
             // emit string write
@@ -81,5 +84,6 @@ namespace Cminus { namespace AST
             state.FreeRegister(rdi);
             state.FreeRegister(eax);
         }
+        ASM::UnalignStack(state);
     }
 }}

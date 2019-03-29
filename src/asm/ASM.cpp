@@ -52,6 +52,18 @@ namespace Cminus { namespace ASM
                            << "\t" << jmpOperation << ' ' << labelID << direction << endl;
     }
 
+    void Push(State& state, Register& reg)
+    {
+        state.OutputStream << "\tpush " << reg.Name() << endl;
+        state.GetStackOffset() += Register::ByteSize(reg.Length);
+    }
+
+    void Pop(State& state, Register& reg)
+    {
+        state.OutputStream << "\tpop " << reg.Name() << endl;
+        state.GetStackOffset() -= Register::ByteSize(reg.Length);
+    }
+
     void Call(State& state, const string& label)
     {
         state.OutputStream << "\tcall " << label << endl;
@@ -253,6 +265,23 @@ namespace Cminus { namespace ASM
         state.OutputStream << "\tadd rsp, " << size << endl;
     }
 
+    void AlignStack(State& state)
+    {
+        int t = state.GetStackOffset();
+        t = 16 - (t % 16);
+        state.StackOffset.push_back(t);
+        if (t > 0)
+            state.OutputStream << "\tsub rsp, " << t << endl;
+    }
+
+    void UnalignStack(State& state)
+    {
+        int t = state.GetStackOffset();
+        state.StackOffset.pop_back();
+        if (t > 0)
+            state.OutputStream << "\tadd rsp, " << t << endl;
+    }
+
     void FunctionHeader(State& state, string& functionName)
     {
         state.StackOffset.push_back(0);
@@ -261,19 +290,20 @@ namespace Cminus { namespace ASM
                     << functionName << ":"                          << endl
                     << "\tpush rbp"                                 << endl
                     << "\tmov rbp, rsp"                             << endl;
+        // TODO: save callee-saved registers
     }
 
     void FunctionFooter(State& state, string& functionName)
     {
         state.StackOffset.pop_back();
-        state.OutputStream << "\tmov eax, 0" << endl
-                           << "\tleave"      << endl
-                           << "\tret"        << endl
-                           << "\t.size\t" << functionName << ", .-" << functionName << endl;
+        state.OutputStream << "\t.size\t" << functionName << ", .-" << functionName << endl;
     }
 
     void Return(State& state)
     {
+        int t = state.GetStackOffset();
+        if(t > 0)
+            state.OutputStream << "\tadd rsp, " << t << endl;
         state.OutputStream << "\tleave" << endl
                            << "\tret"   << endl;
     }

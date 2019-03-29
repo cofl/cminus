@@ -170,4 +170,9 @@ namespace Cminus { namespace ASM
                 return Registers64[(int) index];
         }
     }
+
+    const int Register::ByteSize(RegisterLength length)
+    {
+        return (int) length;
+    }
 }}

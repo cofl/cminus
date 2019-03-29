@@ -60,9 +60,14 @@ namespace Cminus { namespace Structures
         return state;
     }
 
-    int SymbolTable::GetAlignedSize()
+    int SymbolTable::GetByteSize()
     {
-        int size = Variables.size(); // TODO: make sure this is right
-        return size + (16 - size % 16);
+        int size = 0;
+        for(auto&& member: Variables)
+        {
+            auto data = member.second;
+            size += data->ArraySize * 4;
+        }
+        return size;
     }
 }}

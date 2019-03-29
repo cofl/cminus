@@ -54,6 +54,7 @@ namespace Cminus { namespace ASM
 
             static const Register& Get(RegisterIndex index);
             static const Register& Get(RegisterIndex index, RegisterLength length);
+            static const int ByteSize(RegisterLength length);
         private:
     };
 }}

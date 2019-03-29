@@ -15,12 +15,17 @@ SKIP="
 22.guess.cm         Random input is cannot be tested.
 23.asm.cm           Non-standard test.
 13.hack_array.cm    Test assumes undefined behavior.
+19.hack.cm          Hacky stuff, and I don't want to bother reading input.
+"
 
-13.messy.cm         Broken (infinite loop?)
-16.bubblerecur.cm   Broken return code (scanf?).
-17.external.cm      Not implemented.
-18.external.cm      Not implemented.
-19.hack.cm          Not implemented.
+ADDITIONAL="
+17.external.cm      ./foo.c
+18.external.cm      ./foo.c
+19.hack.cm          ./foo.c
+"
+
+FLAGS="
+19.hack.cm          -fno-stack-protector
 "
 
 ##
@@ -97,9 +102,22 @@ for file in $TEST_FILES; do
         fi
     }
 
+    w=$(echo "$ADDITIONAL" | grep $file_basename)
+    add_srcs=""
+    if [ ! -z "$w" ]; then
+        w=$(echo $w | sed -re "s/^\S+\s*//")
+        for j in $w; do
+            add_srcs+=" $(realpath "$file_dirname/$j")"
+        done
+    fi
+
+    flags=$(echo "$FLAGS" | grep $file_basename)
+    if [ ! -z "$flags" ]; then
+        flags=$(echo $flags | sed -re "s/^\S+\s*//")
+    fi
+
     {   # Compile the Expected for this test
-        file_body=$(cat $file)
-        w=$(echo "$_CPP_HEAD" "$file_body" "$_CPP_FOOT" | gcc -x c++ - -g -o $EXPECTED_EXE 2>&1)
+        w=$(echo "$_CPP_HEAD" "$(cat $add_srcs $file)" "$_CPP_FOOT" | gcc $flags -x c++ - -g -o $EXPECTED_EXE 2>&1)
         if [ $? -ne 0 ]; then
             printf "[ERR] $file_basename ($file_dirname)\n"
             printf "\tFailed to compile Expected executable for comparison.\n"
@@ -127,7 +145,7 @@ for file in $TEST_FILES; do
             continue
         fi
 
-        w=$(gcc -g $file_assembly -o $ACTUAL_EXE 2>&1)
+        w=$(gcc $flags -g $file_assembly $add_srcs -o $ACTUAL_EXE 2>&1)
         if [ $? -ne 0 ]; then
             printf "[ERR] $file_basename ($file_dirname)\n"
             printf "\tFailed to compile Actual executable from assembly for comparison.\n"

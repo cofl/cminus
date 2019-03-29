@@ -51,6 +51,7 @@ namespace Cminus { namespace AST
             RegisterIndex::RCX, RegisterIndex::R9, RegisterIndex::R9);
         int argc = Arguments.size();
         vector<Register> used_registers;
+        ASM::AlignStack(state);
         if(argc > 0)
         {
             Register edi;
@@ -124,6 +125,7 @@ namespace Cminus { namespace AST
         ASM::Call(state, ID);
         if (destination.Index != RegisterIndex::EAX)
             ASM::Move(state, destination, eax);
+        ASM::UnalignStack(state);
         for (auto&& r: used_registers)
             state.FreeRegister(r);
         state.RestoreRegisters();

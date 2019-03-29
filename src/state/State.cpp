@@ -2,6 +2,7 @@
 #include <string>
 #include <cstdarg>
 #include "State.hpp"
+#include "../asm/ASM.hpp"
 #include "../asm/Register.hpp"
 
 namespace Cminus
@@ -80,7 +81,7 @@ namespace Cminus
             if(!RegisterIsFree[(int) regi])
             {
                 saved.push_back(regi);
-                OutputStream << "\tpush " << reg.Name() << endl;
+                ASM::Push(*this, reg);
                 RegisterIsFree[(int) regi] = true;
             }
         }
@@ -101,7 +102,7 @@ namespace Cminus
             if(!RegisterIsFree[(int) regi])
             {
                 saved.push_back(regi);
-                OutputStream << "\tpush " << reg.Name() << endl;
+                ASM::Push(*this, reg);
                 RegisterIsFree[(int) regi] = true;
             }
         }
@@ -115,7 +116,7 @@ namespace Cminus
         for(int i = saved.size() - 1; i >= 0; i -= 1)
         {
             auto reg = Register::Get(saved[i], RegisterLength::_64);
-            OutputStream << "\tpop " << reg.Name() << endl;
+            ASM::Pop(*this, reg);
             RegisterIsFree[(int) saved[i]] = false;
         }
     }

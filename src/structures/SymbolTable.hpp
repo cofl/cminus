@@ -54,7 +54,7 @@ namespace Cminus { namespace Structures
             FunctionState* FindFunction(string& name);
             FunctionState* AddFunction(string& name);
 
-            int GetAlignedSize();
+            int GetByteSize();
     };
 }}
 

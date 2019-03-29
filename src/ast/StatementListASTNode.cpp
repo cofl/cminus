@@ -37,17 +37,17 @@ namespace Cminus { namespace AST
 
     void StatementListASTNode::Emit(State& state)
     {
-        if(!Symbols->Variables.empty())
+        int size = Symbols->GetByteSize();
+        if(size > 0)
         {
-            // reserve space on the stack
-            int alignedSize = Symbols->GetAlignedSize();
-            ASM::IncreaseStack(state, alignedSize);
-            int i = 1;
-            for(auto it = Symbols->Variables.begin(); it != Symbols->Variables.end(); it++, i += 1)
+            int base = state.GetStackOffset();
+            ASM::IncreaseStack(state, size);
+            for(auto it = Symbols->Variables.begin(); it != Symbols->Variables.end(); it++)
             {
                 auto data = it->second;
                 data->IsGlobal = false;
-                data->StackOffset = i * data->ArraySize * -4 - state.GetStackOffset() + alignedSize;
+                data->StackOffset = data->ArraySize * -4 - base;
+                base -= data->StackOffset;
                 if(nullptr != data->InitialValue)
                 {
                     // TODO: emit initializer code
@@ -56,7 +56,7 @@ namespace Cminus { namespace AST
         }
         for(auto const& member: Members)
             member->Emit(state);
-        if(!Symbols->Variables.empty())
-            ASM::DecreaseStack(state, Symbols->GetAlignedSize());
+        if(size > 0)
+            ASM::DecreaseStack(state, size);
     }
 }}

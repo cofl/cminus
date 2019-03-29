@@ -27,6 +27,8 @@ namespace Cminus { namespace ASM
     void JumpBackward(State& state, int labelID);
     void CmpAndJump(State& state, const string& jmpOperation, int labelID, char direction, Register& dest);
 
+    void Push(State& state, Register& reg);
+    void Pop(State& state, Register& reg);
     void Call(State& state, const string& label);
 
     void Variable(State& state, VariableASTNode* variable);
@@ -60,6 +62,8 @@ namespace Cminus { namespace ASM
 
     void IncreaseStack(State& state, int size);
     void DecreaseStack(State& state, int size);
+    void AlignStack(State& state);
+    void UnalignStack(State& state);
     void FunctionHeader(State& state, string& functionName);
     void FunctionFooter(State& state, string& functionName);
     void Return(State& state);

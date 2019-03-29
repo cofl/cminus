@@ -55,76 +55,79 @@ namespace Cminus { namespace AST
     void FunctionDeclarationASTNode::Emit(State& state)
     {
         ASM::FunctionHeader(state, ID);
+        Register reg;
         if(nullptr != Arguments)
         {
             int argc = Arguments->size();
+            /* Is this necessary? Put them in the red zone, then increase the stack w/ variables
             if(argc > 0)
             {
                 // make space to put arguments on the stack.
                 int t = 4 * (argc > 6 ? 6 : argc);
                 t += 16 - (t % 16);
                 ASM::IncreaseStack(state, t);
-            }
-            vector<Register> used_registers;
-            Register reg;
+            }*/
             for(int i = 0; i < Arguments->size(); i += 1)
             {
                 auto arg = Arguments->at(i);
                 auto data = Symbols->Variables[arg->ID];
                 data->IsGlobal = false;
+                // TODO: merge these as initializers into the StatementListASTNode
                 switch(i)
                 {
-                    //TODO: reserve these registers
                     case 0:
                         data->StackOffset = -4;
                         if(!state.AllocRegister(RegisterIndex::EDI, RegisterLength::_32, reg))
                             throw "Register EDI already allocated!";
                         ASM::Store(state, data->StackOffset, reg);
-                        used_registers.push_back(reg);
+                        state.FreeRegister(reg);
                         break;
                     case 1:
                         data->StackOffset = -8;
                         if(!state.AllocRegister(RegisterIndex::ESI, RegisterLength::_32, reg))
                             throw "Register ESI already allocated!";
                         ASM::Store(state, data->StackOffset, reg);
-                        used_registers.push_back(reg);
+                        state.FreeRegister(reg);
                         break;
                     case 2:
                         data->StackOffset = -12;
                         if(!state.AllocRegister(RegisterIndex::EDX, RegisterLength::_32, reg))
                             throw "Register EDX already allocated!";
                         ASM::Store(state, data->StackOffset, reg);
-                        used_registers.push_back(reg);
+                        state.FreeRegister(reg);
                         break;
                     case 3:
                         data->StackOffset = -16;
                         if(!state.AllocRegister(RegisterIndex::ECX, RegisterLength::_32, reg))
                             throw "Register ECX already allocated!";
                         ASM::Store(state, data->StackOffset, reg);
-                        used_registers.push_back(reg);
+                        state.FreeRegister(reg);
                         break;
                     case 4:
                         data->StackOffset = -20;
                         if(!state.AllocRegister(RegisterIndex::R8D, RegisterLength::_32, reg))
                             throw "Register R8D already allocated!";
                         ASM::Store(state, data->StackOffset, reg);
-                        used_registers.push_back(reg);
+                        state.FreeRegister(reg);
                         break;
                     case 5:
                         data->StackOffset = -24;
                         if(!state.AllocRegister(RegisterIndex::R9D, RegisterLength::_32, reg))
                             throw "Register R9D already allocated!";
                         ASM::Store(state, data->StackOffset, reg);
-                        used_registers.push_back(reg);
+                        state.FreeRegister(reg);
                         break;
                     default:
                         data->StackOffset = 8 + i * 4;
                 }
             }
-            for(auto&& r: used_registers)
-                state.FreeRegister(r);
         }
         Body->Emit(state);
+        if(!state.AllocRegister(RegisterIndex::EAX, RegisterLength::_32, reg))
+            throw "Register EAX already allocated!";
+        ASM::Zero(state, reg);
+        state.FreeRegister(reg);
+        ASM::Return(state);
         ASM::FunctionFooter(state, ID);
     }
 }}

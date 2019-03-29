@@ -10,7 +10,7 @@
             "request": "launch",
             "program": "${command:extension.vscode-wsl-workspaceFolder}/cmc",
             "args": [
-                "${command:extension.vscode-wsl-workspaceFolder}/input/12.gcd.cm",
+                "${command:extension.vscode-wsl-workspaceFolder}/input/7.p_noparams.cm",
                 "-o", "${command:extension.vscode-wsl-workspaceFolder}/test.s"
             ],
             "stopAtEntry": true,
