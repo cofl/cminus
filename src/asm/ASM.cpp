@@ -302,7 +302,12 @@ namespace Cminus { namespace ASM
                     << functionName << ":"                          << endl
                     << "\tpush rbp"                                 << endl
                     << "\tmov rbp, rsp"                             << endl;
-        // TODO: save callee-saved registers
+        ASM::IncreaseStack(state, Register::ByteSize(RegisterLength::_64));
+        ASM::Push(state, (Register&) Register::Get(RegisterIndex::R12, RegisterLength::_64));
+        ASM::Push(state, (Register&) Register::Get(RegisterIndex::R13, RegisterLength::_64));
+        ASM::Push(state, (Register&) Register::Get(RegisterIndex::R14, RegisterLength::_64));
+        ASM::Push(state, (Register&) Register::Get(RegisterIndex::R15, RegisterLength::_64));
+        ASM::Push(state, (Register&) Register::Get(RegisterIndex::RBX, RegisterLength::_64));
     }
 
     void FunctionFooter(State& state, string& functionName)
@@ -313,6 +318,11 @@ namespace Cminus { namespace ASM
 
     void Return(State& state)
     {
+        ASM::Pop(state, (Register&) Register::Get(RegisterIndex::RBX, RegisterLength::_64));
+        ASM::Pop(state, (Register&) Register::Get(RegisterIndex::R15, RegisterLength::_64));
+        ASM::Pop(state, (Register&) Register::Get(RegisterIndex::R14, RegisterLength::_64));
+        ASM::Pop(state, (Register&) Register::Get(RegisterIndex::R13, RegisterLength::_64));
+        ASM::Pop(state, (Register&) Register::Get(RegisterIndex::R12, RegisterLength::_64));
         int t = state.GetStackOffset();
         if(t > 0)
             state.OutputStream << "\tadd rsp, " << t << endl;
